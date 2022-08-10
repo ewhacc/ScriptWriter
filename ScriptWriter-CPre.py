@@ -34,32 +34,33 @@ class ScriptWriter_cpre():
         self.total_words = 43514
         self.batch_size = batch_size
         self.eval_batch_size = eval_batch_size
-        self.learning_rate_ph = tf.placeholder(tf.float32, shape=[], name='learning_rate')
+        self.learning_rate_ph = tf.compat.v1.placeholder(tf.float32, shape=[], name='learning_rate')
         self.dropout_rate = 0
         self.num_heads = 1
         self.num_blocks = 3
         self.eta = eta
-        self.gamma = tf.get_variable('gamma', shape=1, dtype=tf.float32, trainable=True, initializer=tf.constant_initializer(0.5))
+        self.gamma = tf.compat.v1.get_variable('gamma', shape=1, dtype=tf.float32, trainable=True, initializer=tf.constant_initializer(0.5))
 
-        self.embedding_ph = tf.placeholder(tf.float32, shape=(self.total_words, self.word_embedding_size))
-        self.utterance_ph = tf.placeholder(tf.int32, shape=(None, max_num_utterance, max_sentence_len))
-        self.response_ph = tf.placeholder(tf.int32, shape=(None, max_sentence_len))
-        self.gt_response_ph = tf.placeholder(tf.int32, shape=(None, max_sentence_len))
-        self.y_true_ph = tf.placeholder(tf.int32, shape=(None,))
-        self.narrative_ph = tf.placeholder(tf.int32, shape=(None, max_sentence_len))
+        self.embedding_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.total_words, self.word_embedding_size))
+        self.utterance_ph = tf.compat.v1.placeholder(tf.int32, shape=(None, max_num_utterance, max_sentence_len))
+        self.response_ph = tf.compat.v1.placeholder(tf.int32, shape=(None, max_sentence_len))
+        self.gt_response_ph = tf.compat.v1.placeholder(tf.int32, shape=(None, max_sentence_len))
+        self.y_true_ph = tf.compat.v1.placeholder(tf.int32, shape=(None,))
+        self.narrative_ph = tf.compat.v1.placeholder(tf.int32, shape=(None, max_sentence_len))
 
-        self.word_embeddings = tf.get_variable('word_embeddings_v', shape=(self.total_words, self.word_embedding_size), dtype=tf.float32, trainable=False)
+        self.word_embeddings = tf.compat.v1.get_variable('word_embeddings_v', shape=(self.total_words, self.word_embedding_size), dtype=tf.float32, trainable=False)
         self.embedding_init = self.word_embeddings.assign(self.embedding_ph)
         self.global_step = tf.Variable(0, name='global_step', trainable=False)
         self.is_training = True
         print("current eta: ", self.eta)
 
     def load(self, previous_modelpath):
-        sess = tf.Session()
+        sess = tf.compat.v1.Session()
         latest_ckpt = tf.train.latest_checkpoint(previous_modelpath)
         # print("recover from checkpoint: " + latest_ckpt)
-        variables = tf.contrib.framework.get_variables_to_restore()
-        saver = tf.train.Saver(variables)
+        #variables = tf.contrib.framework.get_variables_to_restore()
+        #saver = tf.train.Saver(variables)
+        saver = tf.compat.v1.train.Saver()
         saver.restore(sess, latest_ckpt)
         return sess
 
@@ -71,7 +72,7 @@ class ScriptWriter_cpre():
         response_embeddings = embedding(self.response_ph, initializer=self.word_embeddings)
         Hr_stack = [response_embeddings]
         for i in range(self.num_blocks):
-            with tf.variable_scope("num_blocks_{}".format(i)):
+            with tf.compat.v1.variable_scope("num_blocks_{}".format(i)):
                 response_embeddings, _ = multihead_attention(queries=response_embeddings, keys=response_embeddings, num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                 response_embeddings = feedforward(response_embeddings, num_units=[self.hidden_units, self.hidden_units])
                 Hr_stack.append(response_embeddings)
@@ -79,7 +80,7 @@ class ScriptWriter_cpre():
         gt_response_embeddings = embedding(self.gt_response_ph, initializer=self.word_embeddings)
         Hgtr_stack = [gt_response_embeddings]
         for i in range(self.num_blocks):
-            with tf.variable_scope("num_blocks_{}".format(i), reuse=True):
+            with tf.compat.v1.variable_scope("num_blocks_{}".format(i), reuse=True):
                 gt_response_embeddings, _ = multihead_attention(queries=gt_response_embeddings, keys=gt_response_embeddings, num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                 gt_response_embeddings = feedforward(gt_response_embeddings, num_units=[self.hidden_units, self.hidden_units])
                 Hgtr_stack.append(gt_response_embeddings)
@@ -87,7 +88,7 @@ class ScriptWriter_cpre():
         narrative_embeddings = embedding(self.narrative_ph, initializer=self.word_embeddings)
         Hn_stack = [narrative_embeddings]
         for i in range(self.num_blocks):
-            with tf.variable_scope("num_blocks_{}".format(i), reuse=True):
+            with tf.compat.v1.variable_scope("num_blocks_{}".format(i), reuse=True):
                 narrative_embeddings, _ = multihead_attention(queries=narrative_embeddings, keys=narrative_embeddings, num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                 narrative_embeddings = feedforward(narrative_embeddings, num_units=[self.hidden_units, self.hidden_units])
                 Hn_stack.append(narrative_embeddings)
@@ -100,7 +101,7 @@ class ScriptWriter_cpre():
             utterance_embeddings = embedding(utterance, initializer=self.word_embeddings)
             Hu_stack = [utterance_embeddings]
             for i in range(self.num_blocks):
-                with tf.variable_scope("num_blocks_{}".format(i), reuse=True):
+                with tf.compat.v1.variable_scope("num_blocks_{}".format(i), reuse=True):
                     utterance_embeddings, _ = multihead_attention(queries=utterance_embeddings, keys=utterance_embeddings, num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                     utterance_embeddings = feedforward(utterance_embeddings, num_units=[self.hidden_units, self.hidden_units])
                     Hu_stack.append(utterance_embeddings)
@@ -112,11 +113,11 @@ class ScriptWriter_cpre():
             u_a_r_stack = []
 
             for i in range(self.num_blocks + 1):
-                with tf.variable_scope("utterance_attention_response_{}".format(i), reuse=reuse):
+                with tf.compat.v1.variable_scope("utterance_attention_response_{}".format(i), reuse=reuse):
                     u_a_r, _ = multihead_attention(queries=Hu_stack[i], keys=Hr_stack[i], num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                     u_a_r = feedforward(u_a_r, num_units=[self.hidden_units, self.hidden_units])
                     u_a_r_stack.append(u_a_r)
-                with tf.variable_scope("response_attention_utterance_{}".format(i), reuse=reuse):
+                with tf.compat.v1.variable_scope("response_attention_utterance_{}".format(i), reuse=reuse):
                     r_a_u, _ = multihead_attention(queries=Hr_stack[i], keys=Hu_stack[i], num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                     r_a_u = feedforward(r_a_u, num_units=[self.hidden_units, self.hidden_units])
                     r_a_u_stack.append(r_a_u)
@@ -126,11 +127,11 @@ class ScriptWriter_cpre():
             n_a_u_stack = []
             u_a_n_stack = []
             for i in range(self.num_blocks + 1):
-                with tf.variable_scope("narrative_attention_response_{}".format(i), reuse=reuse):
+                with tf.compat.v1.variable_scope("narrative_attention_response_{}".format(i), reuse=reuse):
                     n_a_u, _ = multihead_attention(queries=Hn_stack[i], keys=Hu_stack[i], num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                     n_a_u = feedforward(n_a_u, num_units=[self.hidden_units, self.hidden_units])
                     n_a_u_stack.append(n_a_u)
-                with tf.variable_scope("response_attention_narrative_{}".format(i), reuse=reuse):
+                with tf.compat.v1.variable_scope("response_attention_narrative_{}".format(i), reuse=reuse):
                     u_a_n, alpha_1 = multihead_attention(queries=Hu_stack[i], keys=Hn_stack[i], num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                     u_a_n = feedforward(u_a_n, num_units=[self.hidden_units, self.hidden_units])
                     u_a_n_stack.append(u_a_n)
@@ -142,7 +143,7 @@ class ScriptWriter_cpre():
             u_a_n = tf.stack(u_a_n_stack, axis=-1)
             n_a_u = tf.stack(n_a_u_stack, axis=-1)
 
-            with tf.variable_scope('similarity'):
+            with tf.compat.v1.variable_scope('similarity'):
                 # sim shape [batch, max_sent_len, max_sent_len, 2 * (stack_num + 1)]
                 sim_ur = tf.einsum('biks,bjks->bijs', u_a_r, r_a_u) / tf.sqrt(200.0)  # for no rp and normal
                 sim_un = tf.einsum('biks,bjks->bijs', u_a_n, n_a_u) / tf.sqrt(200.0)  # for no rp and normal
@@ -150,7 +151,7 @@ class ScriptWriter_cpre():
             self_n = tf.nn.l2_normalize(tf.stack(Hn_stack, axis=-1))  # #for no rp
             self_u = tf.nn.l2_normalize(tf.stack(Hu_stack, axis=-1))  # #for no rp
             Hn_stack_tensor = tf.stack(Hn_stack, axis=-1)  # [batch, o_len, embedding_size, stack]
-            with tf.variable_scope('similarity'):
+            with tf.compat.v1.variable_scope('similarity'):
                 self_sim = tf.einsum('biks,bjks->bijs', self_u, self_n)  # [batch, u_len, o_len, stack]
                 self_sim = 1 - self.gamma * tf.reduce_sum(self_sim, axis=1)  # [batch, (1), o_len, stack]
                 Hn_stack = tf.einsum('bjkl,bjl->bjkl', Hn_stack_tensor, self_sim)
@@ -162,15 +163,15 @@ class ScriptWriter_cpre():
             if not reuse:
                 reuse = True
 
-        Hn_stack_for_tracking = tf.layers.dense(tf.stack(Hn_stack, axis=2), self.hidden_units)  # [batch, o_len, stack, embedding_size]
+        Hn_stack_for_tracking = tf.compat.v1.layers.dense(tf.stack(Hn_stack, axis=2), self.hidden_units)  # [batch, o_len, stack, embedding_size]
         Hn_stack_for_tracking = tf.transpose(Hn_stack_for_tracking, perm=[0, 1, 3, 2])  # [batch, o_len, embedding_size, stack]
         Hlastu_stack_for_tracking = tf.stack(last_u_reps, axis=-1)  # [batch, u_len, embedding_size, stack]
         Hr_stack_for_tracking = tf.stack(Hgtr_stack, axis=-1)  # [batch, r_len, embedding_size, stack]
         Hlastu = tf.transpose(Hlastu_stack_for_tracking, perm=[0, 2, 3, 1])
-        Hlastu = tf.squeeze(tf.layers.dense(Hlastu, 1), axis=-1)  # [batch, embedding_size, stack]
+        Hlastu = tf.squeeze(tf.compat.v1.layers.dense(Hlastu, 1), axis=-1)  # [batch, embedding_size, stack]
         p1_tensor = tf.nn.softmax(tf.einsum('bnds,bds->bns', Hn_stack_for_tracking, Hlastu), axis=1)  # [batch, o_len, stack]
         Hlastur = tf.transpose(Hr_stack_for_tracking, perm=[0, 2, 3, 1])
-        Hlastur = tf.squeeze(tf.layers.dense(Hlastur, 1), axis=-1)  # [batch, embedding_size, stack]
+        Hlastur = tf.squeeze(tf.compat.v1.layers.dense(Hlastur, 1), axis=-1)  # [batch, embedding_size, stack]
         p2_tensor = tf.nn.softmax(tf.einsum('bnds,bds->bns', Hn_stack_for_tracking, Hlastur), axis=1)  # [batch, o_len, stack]
         p1 = tf.unstack(p1_tensor, num=self.num_blocks + 1, axis=-1)
         p2 = tf.unstack(p2_tensor, num=self.num_blocks + 1, axis=-1)
@@ -182,11 +183,11 @@ class ScriptWriter_cpre():
         r_a_n_stack = []
         n_a_r_stack = []
         for i in range(self.num_blocks + 1):
-            with tf.variable_scope("narrative_attention_response_{}".format(i), reuse=True):
+            with tf.compat.v1.variable_scope("narrative_attention_response_{}".format(i), reuse=True):
                 n_a_r, _ = multihead_attention(queries=Hn_stack[i], keys=Hr_stack[i], num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                 n_a_r = feedforward(n_a_r, num_units=[self.hidden_units, self.hidden_units])
                 n_a_r_stack.append(n_a_r)
-            with tf.variable_scope("response_attention_narrative_{}".format(i), reuse=True):
+            with tf.compat.v1.variable_scope("response_attention_narrative_{}".format(i), reuse=True):
                 r_a_n, _ = multihead_attention(queries=Hr_stack[i], keys=Hn_stack[i], num_units=self.hidden_units, num_heads=self.num_heads, is_training=self.is_training, causality=False, dropout_rate=self.dropout_rate)
                 r_a_n = feedforward(r_a_n, num_units=[self.hidden_units, self.hidden_units])
                 r_a_n_stack.append(r_a_n)
@@ -196,38 +197,38 @@ class ScriptWriter_cpre():
         n_a_r = tf.stack(n_a_r_stack, axis=-1)
         r_a_n = tf.stack(r_a_n_stack, axis=-1)
 
-        with tf.variable_scope('similarity'):
+        with tf.compat.v1.variable_scope('similarity'):
             Mrn = tf.einsum('biks,bjks->bijs', n_a_r, r_a_n) / tf.sqrt(200.0)
         self.rosim = Mrn
         Mur = tf.stack(Mur, axis=1)
         Mun = tf.stack(Mun, axis=1) 
-        with tf.variable_scope('cnn_aggregation'):
-            conv3d = tf.layers.conv3d(Mur, filters=32, kernel_size=[3, 3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv1")
-            pool3d = tf.layers.max_pooling3d(conv3d, pool_size=[3, 3, 3], strides=[3, 3, 3], padding="SAME")
-            conv3d2 = tf.layers.conv3d(pool3d, filters=32, kernel_size=[3, 3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv2")
-            pool3d2 = tf.layers.max_pooling3d(conv3d2, pool_size=[3, 3, 3], strides=[3, 3, 3], padding="SAME")
-            mur = tf.contrib.layers.flatten(pool3d2)
-        with tf.variable_scope('cnn_aggregation', reuse=True):
-            conv3d = tf.layers.conv3d(Mun, filters=32, kernel_size=[3, 3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv1")
-            pool3d = tf.layers.max_pooling3d(conv3d, pool_size=[3, 3, 3], strides=[3, 3, 3], padding="SAME")
-            conv3d2 = tf.layers.conv3d(pool3d, filters=32, kernel_size=[3, 3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv2")
-            pool3d2 = tf.layers.max_pooling3d(conv3d2, pool_size=[3, 3, 3], strides=[3, 3, 3], padding="SAME")
-            mun = tf.contrib.layers.flatten(pool3d2)
-        with tf.variable_scope('cnn_aggregation'):
-            conv2d = tf.layers.conv2d(Mrn, filters=32, kernel_size=[3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv2d")
-            pool2d = tf.layers.max_pooling2d(conv2d, pool_size=[3, 3], strides=[3, 3], padding="SAME")
-            conv2d2 = tf.layers.conv2d(pool2d, filters=32, kernel_size=[3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv2d2")
-            pool2d2 = tf.layers.max_pooling2d(conv2d2, pool_size=[3, 3], strides=[3, 3], padding="SAME")
-            mrn = tf.contrib.layers.flatten(pool2d2)
+        with tf.compat.v1.variable_scope('cnn_aggregation'):
+            conv3d = tf.compat.v1.layers.conv3d(Mur, filters=32, kernel_size=[3, 3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv1")
+            pool3d = tf.compat.v1.layers.max_pooling3d(conv3d, pool_size=[3, 3, 3], strides=[3, 3, 3], padding="SAME")
+            conv3d2 = tf.compat.v1.layers.conv3d(pool3d, filters=32, kernel_size=[3, 3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv2")
+            pool3d2 = tf.compat.v1.layers.max_pooling3d(conv3d2, pool_size=[3, 3, 3], strides=[3, 3, 3], padding="SAME")
+            mur = tf.compat.v1.layers.flatten(pool3d2)
+        with tf.compat.v1.variable_scope('cnn_aggregation', reuse=True):
+            conv3d = tf.compat.v1.layers.conv3d(Mun, filters=32, kernel_size=[3, 3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv1")
+            pool3d = tf.compat.v1.layers.max_pooling3d(conv3d, pool_size=[3, 3, 3], strides=[3, 3, 3], padding="SAME")
+            conv3d2 = tf.compat.v1.layers.conv3d(pool3d, filters=32, kernel_size=[3, 3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv2")
+            pool3d2 = tf.compat.v1.layers.max_pooling3d(conv3d2, pool_size=[3, 3, 3], strides=[3, 3, 3], padding="SAME")
+            mun = tf.compat.v1.layers.flatten(pool3d2)
+        with tf.compat.v1.variable_scope('cnn_aggregation'):
+            conv2d = tf.compat.v1.layers.conv2d(Mrn, filters=32, kernel_size=[3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv2d")
+            pool2d = tf.compat.v1.layers.max_pooling2d(conv2d, pool_size=[3, 3], strides=[3, 3], padding="SAME")
+            conv2d2 = tf.compat.v1.layers.conv2d(pool2d, filters=32, kernel_size=[3, 3], padding="SAME", activation=tf.nn.elu, kernel_initializer=tf.random_uniform_initializer(-0.01, 0.01), name="conv2d2")
+            pool2d2 = tf.compat.v1.layers.max_pooling2d(conv2d2, pool_size=[3, 3], strides=[3, 3], padding="SAME")
+            mrn = tf.compat.v1.layers.flatten(pool2d2)
 
         all_vector = tf.concat([mur, mun, mrn], axis=-1)
-        logits = tf.reshape(tf.layers.dense(all_vector, 1, kernel_initializer=tf.orthogonal_initializer()), [-1])
+        logits = tf.reshape(tf.compat.v1.layers.dense(all_vector, 1, kernel_initializer=tf.compat.v1.orthogonal_initializer()), [-1])
 
         self.y_pred = tf.sigmoid(logits)
-        optimizer = tf.train.AdamOptimizer(learning_rate=self.learning_rate_ph, beta1=0.9, beta2=0.98, epsilon=1e-8)
+        optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=self.learning_rate_ph, beta1=0.9, beta2=0.98, epsilon=1e-8)
         RS_loss = tf.reduce_mean(tf.clip_by_value(tf.nn.sigmoid_cross_entropy_with_logits(labels=tf.cast(self.y_true_ph, tf.float32), logits=logits), -10, 10))
         self.loss = self.eta * RS_loss + (1 - self.eta) * KL_loss
-        self.all_variables = tf.global_variables()
+        self.all_variables = tf.compat.v1.global_variables()
         self.grads_and_vars = optimizer.compute_gradients(self.loss)
 
         for grad, var in self.grads_and_vars:
@@ -236,7 +237,7 @@ class ScriptWriter_cpre():
 
         self.capped_gvs = [(tf.clip_by_value(grad, -5, 5), var) for grad, var in self.grads_and_vars]
         self.train_op = optimizer.apply_gradients(self.capped_gvs, global_step=self.global_step)
-        self.saver = tf.train.Saver(max_to_keep=10)
+        self.saver = tf.compat.v1.train.Saver(max_to_keep=10)
         self.alpha_1 = alpha_1
         # self.alpha_2 = alpha_2
         # self.train_op = self.optimizer.minimize(self.loss, global_step=self.global_step)
@@ -246,45 +247,50 @@ def evaluate(model_path, eval_file, output_path, eta):
     with open(eval_file, 'rb') as f:
         utterance, response, narrative, gt_response, y_true = pickle.load(f)
 
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
+    config.gpu_options.allow_growth = True
+
     current_lr = 1e-3
     all_candidate_scores = []
-    dataset = tf.data.Dataset.from_tensor_slices((utterance, narrative, response, gt_response, y_true)).batch(eval_batch_size)
-    iterator = dataset.make_initializable_iterator()
-    data_iterator = iterator.get_next()
 
-    with open(embedding_file, 'rb') as f:
-        embeddings = pickle.load(f)
+    with tf.compat.v1.Session(config=config) as sess:
+        dataset = tf.data.Dataset.from_tensor_slices((utterance, narrative, response, gt_response, y_true)).batch(eval_batch_size)
+        iterator = tf.compat.v1.data.make_initializable_iterator(dataset)
+        data_iterator = iterator.get_next()
 
-    model = ScriptWriter_cpre(eta)
-    model.build()
-    sess = model.load(model_path)
-    sess.run(iterator.initializer)
-    sess.run(model.embedding_init, feed_dict={model.embedding_ph: embeddings})
+        with open(embedding_file, 'rb') as f:
+            embeddings = pickle.load(f)
 
-    test_loss = 0.0
-    step = 0
-    try:
-        with tqdm(total=len(y_true), ncols=100) as pbar:
-            while True:
-                bu, bn, br, bgtr, by = data_iterator
-                bu, bn, br, bgtr, by = sess.run([bu, bn, br, bgtr, by])
-                candidate_scores, loss = sess.run([model.y_pred, model.loss], feed_dict={
-                    model.utterance_ph: bu, 
-                    model.narrative_ph: bn,
-                    model.response_ph: br,
-                    model.gt_response_ph: bgtr,
-                    model.y_true_ph: by,
-                    model.learning_rate_ph: current_lr
-                })
-                all_candidate_scores.append(candidate_scores)
-                test_loss += loss
-                pbar.update(model.eval_batch_size)
-                step += 1
-    except tf.errors.OutOfRangeError:
-        pass
+        model = ScriptWriter_cpre(eta)
+        model.build()
+        sess = model.load(model_path)
+        sess.run(iterator.initializer)
+        sess.run(model.embedding_init, feed_dict={model.embedding_ph: embeddings})
 
-    sess.close()
-    tf.reset_default_graph()
+        test_loss = 0.0
+        step = 0
+        try:
+            with tqdm(total=len(y_true), ncols=100) as pbar:
+                while True:
+                    bu, bn, br, bgtr, by = data_iterator
+                    bu, bn, br, bgtr, by = sess.run([bu, bn, br, bgtr, by])
+                    candidate_scores, loss = sess.run([model.y_pred, model.loss], feed_dict={
+                        model.utterance_ph: bu, 
+                        model.narrative_ph: bn,
+                        model.response_ph: br,
+                        model.gt_response_ph: bgtr,
+                        model.y_true_ph: by,
+                        model.learning_rate_ph: current_lr
+                    })
+                    all_candidate_scores.append(candidate_scores)
+                    test_loss += loss
+                    pbar.update(model.eval_batch_size)
+                    step += 1
+        except tf.errors.OutOfRangeError:
+          pass
+
+        #sess.close()
+    tf.compat.v1.reset_default_graph()
 
     all_candidate_scores = np.concatenate(all_candidate_scores, axis=0)
     with open(output_path + "test.result.micro_session.txt", "w") as fw:
@@ -303,7 +309,7 @@ def simple_evaluate(sess, model, eval_file):
     y_true = np.array(y_true)
     all_candidate_scores = []
     dataset = tf.data.Dataset.from_tensor_slices((utterance, narrative, response, y_true)).batch(eval_batch_size)
-    iterator = dataset.make_initializable_iterator()
+    iterator = tf.compat.v1.data.make_initializable_iterator(dataset)
     data_iterator = iterator.get_next()
     sess.run(iterator.initializer)
     current_lr = 1e-3
@@ -391,7 +397,7 @@ def evaluate_multi_turns(test_file, model_path, output_path):
         new_data = [new_utterance, new_response, new_narrative, new_labels]
         pickle.dump(new_data, open(initial_file, "wb"))
 
-        (r2_1, r10_1, r10_2, r10_5, mrr), eva_loss, result = simple_evaluate(sess, model, initial_file)
+        (acc, r2_1, r10_1, r10_2, r10_5, mrr), eva_loss, result = simple_evaluate(sess, model, initial_file)
         with open(output_path + "test.result.multi.0.txt", "w") as fw:
             fw.write("R2@1: %f, R10@1: %f, R10@2: %f, R10@5: %f, MRR: %f\n" % (r2_1, r10_1, r10_2, r10_5, mrr))
             for r in result:
@@ -434,7 +440,7 @@ def evaluate_multi_turns(test_file, model_path, output_path):
         new_file = output_path + "test.multi." + str(turn) + ".pkl"
         pickle.dump(new_data, open(new_file, "wb"))
 
-        (r2_1, r10_1, r10_2, r10_5, mrr), eva_loss, result = simple_evaluate(sess, model, new_file)
+        (acc, r2_1, r10_1, r10_2, r10_5, mrr), eva_loss, result = simple_evaluate(sess, model, new_file)
         with open(output_path + "test.result.multi." + str(turn) + ".txt", "w") as fw:
             fw.write("R2@1: %f, R10@1: %f, R10@2: %f, R10@5: %f, MRR: %f\n" % (r2_1, r10_1, r10_2, r10_5, mrr))
             for r in result:
@@ -442,11 +448,11 @@ def evaluate_multi_turns(test_file, model_path, output_path):
 
 
 def train(eta=0.5, load=False, model_path=None, logger=None):
-    config = tf.ConfigProto(allow_soft_placement=True)
+    config = tf.compat.v1.ConfigProto(allow_soft_placement=True)
     config.gpu_options.allow_growth = True
     epoch = 0
     best_result = [0.0, 0.0, 0.0, 0.0, 0.0]
-    with tf.Session(config=config) as sess:
+    with tf.compat.v1.Session(config=config) as sess:
         with open(embedding_file, 'rb') as f:
             embeddings = pickle.load(f, encoding="bytes")
         with open(train_file, 'rb') as f:
@@ -455,11 +461,11 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
             utterance_val, response_val, narrative_val, gt_response_val, y_true_val = pickle.load(f)
 
         train_dataset = tf.data.Dataset.from_tensor_slices((utterance_train, narrative_train, response_train, gt_response_train, y_true_train)).shuffle(1024).batch(batch_size)
-        train_iterator = train_dataset.make_initializable_iterator()
+        train_iterator = tf.compat.v1.data.make_initializable_iterator(train_dataset)
         train_data_iterator = train_iterator.get_next()
 
         val_dataset = tf.data.Dataset.from_tensor_slices((utterance_val, narrative_val, response_val, gt_response_val, y_true_val)).batch(batch_size)
-        val_iterator = val_dataset.make_initializable_iterator()
+        val_iterator = tf.compat.v1.data.make_initializable_iterator(val_dataset)
         val_data_iterator = val_iterator.get_next()
 
         model = ScriptWriter_cpre(eta=eta)
@@ -468,7 +474,7 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
         if load:
             sess = model.load(model_path)
 
-        sess.run(tf.global_variables_initializer())
+        sess.run(tf.compat.v1.global_variables_initializer())
         sess.run(model.embedding_init, feed_dict={model.embedding_ph: embeddings})
         current_lr = 1e-3
 
@@ -560,7 +566,7 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
             tqdm.write('Epoch No: %d, the train loss is %f, the dev loss is %f' % (epoch + 1, train_loss / step, val_loss / val_step))
             epoch += 1
         sess.close()
-    tf.reset_default_graph()
+    tf.compat.v1.reset_default_graph()
 
 
 if __name__ == "__main__":
@@ -579,7 +585,7 @@ if __name__ == "__main__":
     train(eta=eta, logger=logger)
 
     (acc, r2_1, r10_1, r10_2, r10_5, mrr), eva_loss, _ = evaluate(save_path, evaluate_file, output_path=result_path, eta=eta)
-    print("Loss on test set: %f, R2@1: %f, R10@1: %f, R10@2: %f, R10@5: %f, MRR: %f" % (eva_loss, r2_1, r10_1, r10_2, r10_5, mrr))
+    print("Loss on test set: %f, Accuracy: %f, R2@1: %f, R10@1: %f, R10@2: %f, R10@5: %f, MRR: %f" % (eva_loss, acc, r2_1, r10_1, r10_2, r10_5, mrr))
 
     # to evaluate multi-turn results, the vocab file is needed
     # evaluate_multi_turns(test_file=evaluate_file, model_path=save_path, output_path=result_path)
