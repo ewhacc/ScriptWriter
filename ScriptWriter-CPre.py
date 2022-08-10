@@ -523,6 +523,7 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
                                 pass
                             all_candidate_scores = np.concatenate(all_candidate_scores, axis=0)
                             result = Evaluate.evaluate_all(all_candidate_scores, y_true_val)
+                            result = result[1:] # cut off first accuracy result
                             if result[0] + result[1] + result[2] + result[3] + result[4] > best_result[0] + best_result[1] + best_result[2] + best_result[3] + best_result[4]:
                                 best_result = result
                                 tqdm.write("Current best result on validation set: r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
