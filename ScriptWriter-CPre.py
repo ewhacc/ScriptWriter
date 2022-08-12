@@ -31,7 +31,12 @@ class ScriptWriter_cpre():
         self.max_sentence_len = max_sentence_len
         self.word_embedding_size = 200
         self.hidden_units = 200
-        self.total_words = 43514
+
+        if kor_mode:
+            self.total_words = 11883
+        else:
+            self.total_words = 43514
+
         self.batch_size = batch_size
         self.eval_batch_size = eval_batch_size
         self.learning_rate_ph = tf.compat.v1.placeholder(tf.float32, shape=[], name='learning_rate')
@@ -571,6 +576,22 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
 
 
 if __name__ == "__main__":
+    import sys
+    args = sys.argv[1:]
+    if '-k' in args or '--k' in args:
+        kor_mode = True
+    else:
+        kor_mode = False
+
+    if kor_mode:
+        print('korean training mode')
+        embedding_file = "./data/embeddings_ko.pkl"
+        train_file = "./data/train_ko.pkl"
+        val_file = "./data/dev_ko.pkl"
+        evaluate_file = "./data/test_ko.pkl"
+    else:
+        print('default training mode')
+
     os.environ['CUDA_VISIBLE_DEVICES'] = "0"
     log_path = "./model/cpre/all_log"
     logging.basicConfig(filename=log_path, level=logging.INFO)
