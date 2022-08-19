@@ -612,7 +612,7 @@ if __name__ == "__main__":
     if not os.path.exists(result_path):
         os.mkdir(result_path)
     logger.info("Current Eta: %.2f" % eta)
-    #train(eta=eta, logger=logger)
+    train(eta=eta, logger=logger)
 
     (acc, r2_1, r10_1, r10_2, r10_5, mrr), eva_loss, _ = evaluate(save_path, evaluate_file, output_path=result_path, eta=eta)
     print("Loss on test set: %f, Accuracy: %f, R2@1: %f, R10@1: %f, R10@2: %f, R10@5: %f, MRR: %f" % (eva_loss, acc, r2_1, r10_1, r10_2, r10_5, mrr))
