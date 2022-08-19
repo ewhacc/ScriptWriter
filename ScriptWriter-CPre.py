@@ -269,6 +269,8 @@ def evaluate(model_path, eval_file, output_path, eta):
         model = ScriptWriter_cpre(eta)
         model.build()
         sess = model.load(model_path)
+        gamma = sess.run([model.gamma])
+        print('gamma =', gamma)
         sess.run(iterator.initializer)
         sess.run(model.embedding_init, feed_dict={model.embedding_ph: embeddings})
 
@@ -528,11 +530,12 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
                                 pass
                             all_candidate_scores = np.concatenate(all_candidate_scores, axis=0)
                             result = Evaluate.evaluate_all(all_candidate_scores, y_true_val)
+                            acc = result[0]
                             result = result[1:] # cut off first accuracy result
                             if result[0] + result[1] + result[2] + result[3] + result[4] > best_result[0] + best_result[1] + best_result[2] + best_result[3] + best_result[4]:
                                 best_result = result
-                                tqdm.write("Current best result on validation set: r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
-                                logger.info("Current best result on validation set: r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
+                                tqdm.write("Current best result on validation set: acc %.3f r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
+                                logger.info("Current best result on validation set: acc %.3f r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
                                 model.saver.save(sess, save_path + "model")
                                 patience = 0
                             else:
@@ -564,10 +567,12 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
                 pass
             all_candidate_scores = np.concatenate(all_candidate_scores, axis=0)
             result = Evaluate.evaluate_all(all_candidate_scores, y_true_val)
+            acc = result[0]
+            result = result[1:]
             if result[0] + result[1] + result[2] + result[3] + result[4] > best_result[0] + best_result[1] + best_result[2] + best_result[3] + best_result[4]:
                 best_result = result
-                tqdm.write("Current best result on validation set: r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
-                logger.info("Current best result on validation set: r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
+                tqdm.write("Current best result on validation set: acc %.3f, r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
+                logger.info("Current best result on validation set: acc %.3f, r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
                 model.saver.save(sess, save_path + "model")
             tqdm.write('Epoch No: %d, the train loss is %f, the dev loss is %f' % (epoch + 1, train_loss / step, val_loss / val_step))
             epoch += 1
