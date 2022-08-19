@@ -45,6 +45,7 @@ class ScriptWriter_cpre():
         self.num_blocks = 3
         self.eta = eta
         self.gamma = tf.compat.v1.get_variable('gamma', shape=1, dtype=tf.float32, trainable=True, initializer=tf.constant_initializer(0.5))
+        #self.gamma = tf.compat.v1.get_variable('gamma', shape=1, dtype=tf.float32, trainable=True, initializer=tf.constant_initializer(0.5/50))
 
         self.embedding_ph = tf.compat.v1.placeholder(tf.float32, shape=(self.total_words, self.word_embedding_size))
         self.utterance_ph = tf.compat.v1.placeholder(tf.int32, shape=(None, max_num_utterance, max_sentence_len))
@@ -155,6 +156,8 @@ class ScriptWriter_cpre():
 
             self_n = tf.nn.l2_normalize(tf.stack(Hn_stack, axis=-1))  # #for no rp
             self_u = tf.nn.l2_normalize(tf.stack(Hu_stack, axis=-1))  # #for no rp
+            #self_n = tf.nn.l2_normalize(tf.stack(Hn_stack, axis=-1), axis=-2)  # #for no rp
+            #self_u = tf.nn.l2_normalize(tf.stack(Hu_stack, axis=-1), axis=-2)  # #for no rp
             Hn_stack_tensor = tf.stack(Hn_stack, axis=-1)  # [batch, o_len, embedding_size, stack]
             with tf.compat.v1.variable_scope('similarity'):
                 self_sim = tf.einsum('biks,bjks->bijs', self_u, self_n)  # [batch, u_len, o_len, stack]
@@ -535,7 +538,7 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
                             if result[0] + result[1] + result[2] + result[3] + result[4] > best_result[0] + best_result[1] + best_result[2] + best_result[3] + best_result[4]:
                                 best_result = result
                                 tqdm.write("Current best result on validation set: acc %.3f r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
-                                logger.info("Current best result on validation set: acc %.3f r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
+                                logger.info("Current best result on validation set: epoch %i, acc %.3f r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (epoch, acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
                                 model.saver.save(sess, save_path + "model")
                                 patience = 0
                             else:
@@ -572,7 +575,7 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
             if result[0] + result[1] + result[2] + result[3] + result[4] > best_result[0] + best_result[1] + best_result[2] + best_result[3] + best_result[4]:
                 best_result = result
                 tqdm.write("Current best result on validation set: acc %.3f, r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
-                logger.info("Current best result on validation set: acc %.3f, r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
+                logger.info("Current best result on validation set: epoch %i, acc %.3f, r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (epoch, acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
                 model.saver.save(sess, save_path + "model")
             tqdm.write('Epoch No: %d, the train loss is %f, the dev loss is %f' % (epoch + 1, train_loss / step, val_loss / val_step))
             epoch += 1
@@ -609,10 +612,11 @@ if __name__ == "__main__":
     if not os.path.exists(result_path):
         os.mkdir(result_path)
     logger.info("Current Eta: %.2f" % eta)
-    train(eta=eta, logger=logger)
+    #train(eta=eta, logger=logger)
 
     (acc, r2_1, r10_1, r10_2, r10_5, mrr), eva_loss, _ = evaluate(save_path, evaluate_file, output_path=result_path, eta=eta)
     print("Loss on test set: %f, Accuracy: %f, R2@1: %f, R10@1: %f, R10@2: %f, R10@5: %f, MRR: %f" % (eva_loss, acc, r2_1, r10_1, r10_2, r10_5, mrr))
+    logger.info("Loss on test set: %f, Accuracy: %f, R2@1: %f, R10@1: %f, R10@2: %f, R10@5: %f, MRR: %f" % (eva_loss, acc, r2_1, r10_1, r10_2, r10_5, mrr))
 
     # to evaluate multi-turn results, the vocab file is needed
     # evaluate_multi_turns(test_file=evaluate_file, model_path=save_path, output_path=result_path)
