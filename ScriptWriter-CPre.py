@@ -162,6 +162,7 @@ class ScriptWriter_cpre():
             with tf.compat.v1.variable_scope('similarity'):
                 self_sim = tf.einsum('biks,bjks->bijs', self_u, self_n)  # [batch, u_len, o_len, stack]
                 self_sim = 1 - self.gamma * tf.reduce_sum(self_sim, axis=1)  # [batch, (1), o_len, stack]
+                #self_sim = 1 - self.gamma * tf.reduce_mean(self_sim, axis=1)  # [batch, (1), o_len, stack]
                 Hn_stack = tf.einsum('bjkl,bjl->bjkl', Hn_stack_tensor, self_sim)
                 Hn_stack = tf.unstack(Hn_stack, axis=-1, num=self.num_blocks + 1)
 
@@ -578,6 +579,7 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
                 logger.info("Current best result on validation set: epoch %i, acc %.3f, r2@1 %.3f, r10@1 %.3f, r10@2 %.3f, r10@5 %.3f, mrr %.3f" % (epoch, acc, best_result[0], best_result[1], best_result[2], best_result[3], best_result[4]))
                 model.saver.save(sess, save_path + "model")
             tqdm.write('Epoch No: %d, the train loss is %f, the dev loss is %f' % (epoch + 1, train_loss / step, val_loss / val_step))
+            logger.info('Epoch No: %d, the train loss is %f, the dev loss is %f' % (epoch + 1, train_loss / step, val_loss / val_step))
             epoch += 1
         sess.close()
     tf.compat.v1.reset_default_graph()
