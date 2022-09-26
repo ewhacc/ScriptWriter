@@ -56,7 +56,7 @@ class Story(datasets.GeneratorBasedBuilder):
             url="https://github.com/rudinger/winogender-schemas",
         ),
     ]
-    _URL = "data/"
+    _URL = "../data/"
     _URLS = {
         "train": _URL + "train.gr.pkl",
         "dev": _URL + "dev.gr.pkl",
@@ -82,7 +82,7 @@ class Story(datasets.GeneratorBasedBuilder):
             for i in range(len(utterance)):
                 id_ = i
                 yield id_, {
-                    "id": id_,
+                    "idx": id_,
                     "utterance": utterance[i],
                     "response": response[i],
                     "narrative": narrative[i],
@@ -95,7 +95,7 @@ class Story(datasets.GeneratorBasedBuilder):
             description=_DESCRIPTION,
             features=datasets.Features(
                 {
-                    "id": datasets.Value("int32"),
+                    "idx": datasets.Value("int32"),
                     "utterance": datasets.Array2D(shape=(11,50), dtype='int32'),
                     "response": datasets.Sequence(datasets.Value("int32")),
                     "narrative": datasets.Sequence(datasets.Value("int32")),
