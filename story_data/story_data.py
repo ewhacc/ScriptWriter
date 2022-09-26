@@ -87,7 +87,7 @@ class Story(datasets.GeneratorBasedBuilder):
                     "response": response[i],
                     "narrative": narrative[i],
                     "gt_response": gt_response[i],
-                    "label": y_true[i]
+                    "label": float(y_true[i]),
                 }
 
     def _info(self):
@@ -100,7 +100,7 @@ class Story(datasets.GeneratorBasedBuilder):
                     "response": datasets.Sequence(datasets.Value("int32")),
                     "narrative": datasets.Sequence(datasets.Value("int32")),
                     "gt_response": datasets.Sequence(datasets.Value("int32")),
-                    "label": datasets.Value("int32"),
+                    "label": datasets.Value("float32"),
                 }
             ),
             # No default supervised_keys (as we have to pass both question
