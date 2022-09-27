@@ -60,6 +60,7 @@ class Story(datasets.GeneratorBasedBuilder):
     _URLS = {
         "train": _URL + "train.gr.pkl",
         "dev": _URL + "dev.gr.pkl",
+        "test": _URL + "test.gr.pkl",
     }
 
     def _split_generators(self, dl_manager: datasets.DownloadManager) -> List[datasets.SplitGenerator]:
@@ -69,6 +70,7 @@ class Story(datasets.GeneratorBasedBuilder):
         return [
             datasets.SplitGenerator(name=datasets.Split.TRAIN, gen_kwargs={"filepath": downloaded_files["train"]}),
             datasets.SplitGenerator(name=datasets.Split.VALIDATION, gen_kwargs={"filepath": downloaded_files["dev"]}),
+            datasets.SplitGenerator(name=datasets.Split.TEST, gen_kwargs={"filepath": downloaded_files["test"]}),
         ]
 
     def _generate_examples(self, filepath):
