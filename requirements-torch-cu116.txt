@@ -6,9 +6,9 @@
 #torchaudio==0.10.1
 
 # pip install torch==1.10.2+cu111 --extra-index-url https://download.pytorch.org/whl/cu111
-# pip install -r requirements-torch-cu111.txt --extra-index-url https://download.pytorch.org/whl/cu111
+# pip install -r requirements-torch-cu116.txt --extra-index-url https://download.pytorch.org/whl/cu116
 
-torch==1.10.2+cu111
+torch==1.12.1+cu116
 transformers
 gensim
 datasets
