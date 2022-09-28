@@ -11,7 +11,7 @@ _CITATION = 'copyright'
 class StoryConfig(datasets.BuilderConfig):
     """BuilderConfig for Story."""
 
-    def __init__(self, features, data_url, citation, url, label_classes=("False", "True"), **kwargs):
+    def __init__(self, features, data_urls, citation, url, label_classes=("False", "True"), **kwargs):
         """BuilderConfig for Story.
 
         Args:
@@ -30,41 +30,47 @@ class StoryConfig(datasets.BuilderConfig):
         super().__init__(version=datasets.Version("1.0.0"), **kwargs)
         self.features = features
         self.label_classes = label_classes
-        self.data_url = data_url
+        self.data_urls = data_urls
         self.citation = citation
         self.url = url
 
 class Story(datasets.GeneratorBasedBuilder):
     """The Story."""
 
+    _URL = "../data/"
+
     BUILDER_CONFIGS = [
         StoryConfig(
             name="original",
             description="Original",
             features=["narrative", "utterance", "response"],
-            data_url="https://storyhelper.ewha.ac.kr",
+            #data_url="https://storyhelper.ewha.ac.kr",
+            data_urls = {
+                "train": _URL + "train.gr.pkl",
+                "dev": _URL + "dev.gr.pkl",
+                "test": _URL + "test.gr.pkl",
+            },
             citation="StoryHelper",
             url="https://github.com/google-research-datasets/boolean-questions",
         ),
         StoryConfig(
-            name="storyhelper",
+            name="helper",
             description="StoryHelper",
             features=["narrative", "utterance", "response"],
             #label_classes=["entailment", "not_entailment"],
-            data_url="https://storyhelper.ewha.ac.kr",
+            #data_url="https://storyhelper.ewha.ac.kr",
+            data_urls = {
+                "train": _URL + "train_ko.pkl",
+                "dev": _URL + "dev_ko.pkl",
+                "test": _URL + "test_ko.pkl",
+            },
             citation="StoryHelper",
             url="https://github.com/rudinger/winogender-schemas",
         ),
     ]
-    _URL = "../data/"
-    _URLS = {
-        "train": _URL + "train.gr.pkl",
-        "dev": _URL + "dev.gr.pkl",
-        "test": _URL + "test.gr.pkl",
-    }
 
     def _split_generators(self, dl_manager: datasets.DownloadManager) -> List[datasets.SplitGenerator]:
-        urls_to_download = self._URLS
+        urls_to_download = self.config.data_urls
         downloaded_files = dl_manager.download_and_extract(urls_to_download)
 
         return [
