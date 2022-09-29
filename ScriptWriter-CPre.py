@@ -25,17 +25,14 @@ batch_size = 50
 eval_batch_size = 100
 
 class ScriptWriter_cpre():
-    def __init__(self, eta=0.5):
+    def __init__(self, eta=0.5, total_words=43514):
         self.max_num_utterance = max_num_utterance
         self.negative_samples = 1
         self.max_sentence_len = max_sentence_len
         self.word_embedding_size = 200
         self.hidden_units = 200
 
-        if kor_mode:
-            self.total_words = 11883
-        else:
-            self.total_words = 43514
+        self.total_words = total_words
 
         self.batch_size = batch_size
         self.eval_batch_size = eval_batch_size
@@ -270,7 +267,7 @@ def evaluate(model_path, eval_file, output_path, eta):
         with open(embedding_file, 'rb') as f:
             embeddings = pickle.load(f)
 
-        model = ScriptWriter_cpre(eta)
+        model = ScriptWriter_cpre(eta, len(embeddings))
         model.build()
         sess = model.load(model_path)
         gamma = sess.run([model.gamma])
@@ -356,7 +353,7 @@ def evaluate_multi_turns(test_file, model_path, output_path):
     with open(embedding_file, 'rb') as f:
         embeddings = pickle.load(f)
 
-    model = ScriptWriter_cpre()
+    model = ScriptWriter_cpre(total_words=len(embeddings))
     model.build()
     sess = model.load(model_path)
     sess.run(model.embedding_init, feed_dict={model.embedding_ph: embeddings})
@@ -466,6 +463,7 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
     with tf.compat.v1.Session(config=config) as sess:
         with open(embedding_file, 'rb') as f:
             embeddings = pickle.load(f, encoding="bytes")
+
         with open(train_file, 'rb') as f:
             utterance_train, response_train, narrative_train, gt_response_train, y_true_train = pickle.load(f)
         with open(val_file, "rb") as f:
@@ -479,7 +477,7 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
         val_iterator = tf.compat.v1.data.make_initializable_iterator(val_dataset)
         val_data_iterator = val_iterator.get_next()
 
-        model = ScriptWriter_cpre(eta=eta)
+        model = ScriptWriter_cpre(eta=eta, total_words=len(embeddings))
         model.build()
 
         if load:
