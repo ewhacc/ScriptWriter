@@ -584,23 +584,33 @@ def train(eta=0.5, load=False, model_path=None, logger=None):
 
 
 if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-p', '--prefix', type=str, help='dataset name')
+    parser.add_argument('-k', '--k', action='store_true', help='same as "-p ko"')
+    args = parser.parse_args()
+    print(args)
     import sys
-    args = sys.argv[1:]
-    if '-k' in args or '--k' in args:
+    #args = sys.argv[1:]
+    if args.k:
         kor_mode = True
+        prefix = 'ko'
+    elif args.prefix:
+        kor_mode = True
+        prefix = args.prefix
     else:
         kor_mode = False
 
     if kor_mode:
         print('korean training mode')
-        embedding_file = "./data/embeddings_ko.pkl"
-        train_file = "./data/train_ko.pkl"
-        val_file = "./data/dev_ko.pkl"
-        evaluate_file = "./data/test_ko.pkl"
+        embedding_file = f'data/embeddings_{prefix}.pkl'
+        train_file = f'data/train_{prefix}.pkl'
+        val_file = f'data/dev_{prefix}.pkl'
+        evaluate_file = f'data/test_{prefix}.pkl'
     else:
         print('default training mode')
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+    #os.environ['CUDA_VISIBLE_DEVICES'] = "0"
     log_path = "./model/cpre/all_log"
     logging.basicConfig(filename=log_path, level=logging.INFO)
     logger = logging.getLogger(__name__)
