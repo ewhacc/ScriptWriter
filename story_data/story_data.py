@@ -44,7 +44,6 @@ class Story(datasets.GeneratorBasedBuilder):
             name="original",
             description="Original",
             features=["narrative", "utterance", "response"],
-            #data_url="https://storyhelper.ewha.ac.kr",
             data_urls = {
                 "train": _URL + "train.gr.pkl",
                 "dev": _URL + "dev.gr.pkl",
@@ -57,12 +56,22 @@ class Story(datasets.GeneratorBasedBuilder):
             name="helper",
             description="StoryHelper",
             features=["narrative", "utterance", "response"],
-            #label_classes=["entailment", "not_entailment"],
-            #data_url="https://storyhelper.ewha.ac.kr",
             data_urls = {
                 "train": _URL + "train_ko.pkl",
                 "dev": _URL + "dev_ko.pkl",
                 "test": _URL + "test_ko.pkl",
+            },
+            citation="StoryHelper",
+            url="https://github.com/rudinger/winogender-schemas",
+        ),
+        StoryConfig(
+            name="1cycle",
+            description="StoryHelper",
+            features=["narrative", "utterance", "response"],
+            data_urls = {
+                "train": _URL + "train_1cycle.pkl",
+                "dev": _URL + "dev_1cycle.pkl",
+                "test": _URL + "test_1cycle.pkl",
             },
             citation="StoryHelper",
             url="https://github.com/rudinger/winogender-schemas",
