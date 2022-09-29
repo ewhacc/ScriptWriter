@@ -53,7 +53,7 @@ class Story(datasets.GeneratorBasedBuilder):
             url="https://github.com/google-research-datasets/boolean-questions",
         ),
         StoryConfig(
-            name="helper",
+            name="ko",
             description="StoryHelper",
             features=["narrative", "utterance", "response"],
             data_urls = {
