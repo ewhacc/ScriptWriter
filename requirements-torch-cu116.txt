@@ -16,3 +16,4 @@ tqdm
 gdown
 jupyter
 gpustat
+openpyxl
