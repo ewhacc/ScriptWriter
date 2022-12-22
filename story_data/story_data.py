@@ -76,6 +76,18 @@ class Story(datasets.GeneratorBasedBuilder):
             citation="StoryHelper",
             url="https://github.com/rudinger/winogender-schemas",
         ),
+        StoryConfig(
+            name="final",
+            description="StoryHelper",
+            features=["narrative", "utterance", "response"],
+            data_urls = {
+                "train": _URL + "train_final.pkl",
+                "dev": _URL + "dev_final.pkl",
+                "test": _URL + "test_final.pkl",
+            },
+            citation="StoryHelper",
+            url="https://github.com/rudinger/winogender-schemas",
+        ),
     ]
 
     def _split_generators(self, dl_manager: datasets.DownloadManager) -> List[datasets.SplitGenerator]:
