@@ -91,21 +91,26 @@ EOS_ID = tokenizer.sep_token_id
 
 positive_sessions = []
 positive_str = []
-for unit_data in data_dict:
+positive_ids = []
+for i, unit_data in enumerate(data_dict):
     unit_contexts = [tokenizer.tokenize(text) for text in unit_data['script'] + ['[SEP]'] ]
     while [] in unit_contexts:
-        print('empty string in the script. removing...')
+        print('empty string in the script. removing..., id=', i)
         index = unit_contexts.index([])
         #print("'{%s}'"%unit_data['script'][index])
         del unit_contexts[index]
         #unit_contexts.remove([])
         del unit_data['script'][index]
     if len(unit_contexts) <= 1:
-        print('empty scripts. skipping...')
+        print('empty scripts. skipping..., id=', i)
         continue
     unit_narrative = tokenizer.tokenize(unit_data['storyline'])
+    if len(unit_narrative) == 0:
+        print('empty narrative. skipping, id=', i)
+        continue
     positive_sessions.append([unit_contexts, unit_narrative, 1])
     positive_str.append(unit_data)
+    positive_ids.append(i)
 print("all suitable sessions: ", len(positive_sessions))
 
 # reproducibility를 위한 random seed 설정
@@ -114,6 +119,8 @@ np.random.seed(42)
 np.random.shuffle(positive_sessions)
 np.random.seed(42)
 np.random.shuffle(positive_str)
+np.random.seed(42)
+np.random.shuffle(positive_ids)
 
 
 # In[ ]:
@@ -235,7 +242,9 @@ for unit, unit_str in zip(positive_sessions, positive_str):
     context_id = [[vocab.get(word, UNK_ID) for word in sent] for sent in context]
     if len(narrative_id) == 0 or len(context_id) == 0:
         print('empty narrative found. skipping...')
-        #print(unit)
+        #print(unit[0])
+        #print(unit[1])
+        print(unit_str)
         continue
     data = [context_id, narrative_id, 1]
     positive_data.append(data)
@@ -245,8 +254,15 @@ for unit, unit_str in zip(positive_sessions, positive_str):
 # In[ ]:
 
 
+len(positive_str), len(positive_str2), len(positive_ids)
+
+
+# In[ ]:
+
+
 dev_test_num = int(len(positive_data) * 0.05)
 train, dev, test = positive_data[:train_num], positive_data[train_num: train_num + dev_test_num], positive_data[train_num + dev_test_num:]
+train_ids, dev_ids, test_ids = positive_ids[:train_num], positive_ids[train_num: train_num + dev_test_num], positive_ids[train_num + dev_test_num:]
 
 
 # In[ ]:
@@ -318,12 +334,17 @@ print(dev_all[0], dev_all[1], dev_all[2])
 # In[ ]:
 
 
-for context_id, narrative_id, _ in test:
+test_all = []
+test_all_ids = []
+test_num_context = []
+for i_test, (context_id, narrative_id, _) in enumerate(test):
     num_context = len(context_id)
+    test_num_context.append(num_context-1)
     for i in range(1, num_context):
         context = context_id[:i]
         response = context_id[i]
         test_all.append([context, response, narrative_id, response, 1])
+        test_all_ids.append(i_test)
         count = 0
         negative_samples = []
         # fix count 버그
@@ -336,19 +357,28 @@ for context_id, narrative_id, _ in test:
                 if len(response) != len(random_response):
                     test_all.append([context, random_response, narrative_id, response, 0])
                     negative_samples.append(random_response)
+                    test_all_ids.append(i_test)
                     count += 1
                 else:
                     for idx, id in enumerate(response):
                         if id != random_response[idx]:
                             test_all.append([context, random_response, narrative_id, response, 0])
                             negative_samples.append(random_response)
+                            test_all_ids.append(i_test)
                             count += 1
                             break
         if response == [EOS_ID]:
             test_all.append([context, [EOS_ID], narrative_id, response, 1])
         else:
             test_all.append([context, [EOS_ID], narrative_id, response, 0])
+        test_all_ids.append(i_test)
 print(test_all[0], test_all[1], test_all[2])
+
+
+# In[ ]:
+
+
+len(test_all_ids), len(test_all)
 
 
 # In[ ]:
@@ -357,6 +387,12 @@ print(test_all[0], test_all[1], test_all[2])
 print('total train count =', len(train_all))
 print('total val count =', len(dev_all))
 print('total test count =', len(test_all))
+
+
+# In[ ]:
+
+
+np.sum(np.array(test_num_context))
 
 
 # In[ ]:
@@ -454,7 +490,8 @@ with open(f'data/positive_str_{prefix}.pkl', "wb") as f:
 # In[ ]:
 
 
-
+with open(f'data/test_all_ids_{prefix}.pkl', "wb") as f:
+    pickle.dump(test_all_ids, f)
 
 
 # In[ ]:
@@ -473,6 +510,34 @@ for unit, unit_str in zip (positive_data, positive_str2):
 # In[ ]:
 
 
+def get_dat(index, data_pad, ids = None):
+    utterances = data_pad[0][index]
+    response = data_pad[1][index]
+    narrative = data_pad[2][index]
+    gt_response = data_pad[3][index]
+    y_true = data_pad[4][index]
+    narrative = narrative[narrative!=0]
+    response = response[response!=0]
+    gt_response = gt_response[gt_response!=0]
+    #print([model.wv.index_to_key[k-1] for k in narrative])
+    narrative_str = tokenizer.convert_tokens_to_string([model.wv.index_to_key[k-1] for k in narrative])
+    response_str = tokenizer.convert_tokens_to_string([model.wv.index_to_key[k-1] for k in response])
+    gt_response_str = tokenizer.convert_tokens_to_string([model.wv.index_to_key[k-1] for k in gt_response])
+    #print(y_true)
+    utterance_str = ['']*10
+    for i in range(10):
+        utterance = utterances[i]
+        utterance = utterance[utterance!=0]
+        if len(utterance) == 0:
+            break
+        utterance_str[i] =  tokenizer.convert_tokens_to_string([model.wv.index_to_key[k-1] for k in utterance])
+    #print()
+    if ids == None:
+        id_ = None
+    else:
+        id_ = ids[index]
+    return id_, narrative_str, response_str, gt_response_str, y_true, utterance_str
+    
 def browse_dat(index, data_pad):
     utterances = data_pad[0][index]
     response = data_pad[1][index]
@@ -502,14 +567,56 @@ def browse_dat(index, data_pad):
 # In[ ]:
 
 
-#for i in range(30): 
-#    browse_dat(i, train_pad)
+for i in range(110,120): 
+    browse_dat(i, test_pad)
 
 
 # In[ ]:
 
 
+import pandas as pd
 
+
+# In[ ]:
+
+
+column_names = ['id', 'Narrative', 'Response', 'GT_Response', 'y_true', 'score', 'R2@1', 'R10@1', 'R10@2', 'R10@5', 'MRR', 'AVG']
+for i in range(10):
+    column_names.append('U%02d'%(i+1))
+print(column_names)
+df = pd.DataFrame(columns=column_names)
+
+
+# In[ ]:
+
+
+n = len(test_all_ids)
+data_dict_all = []
+for i in tqdm(range(n)):
+    id_, narrative_str, response_str, gt_response_str, y_true, utterance_str = get_dat(i, test_pad, test_all_ids)
+    data_dict = { }
+    data_dict['id'] = id_
+    data_dict['Narrative'] = narrative_str
+    data_dict['Response'] = response_str
+    data_dict['GT_Response'] = gt_response_str
+    data_dict['y_true'] = y_true
+    for i in range(10):
+        data_dict[f'U%02d'%(i+1)] = utterance_str[i]
+    #new_row = pd.Series(data_dict)
+    #df = pd.concat([df, new_row.to_frame().T], ignore_index=True)
+    data_dict_all.append(data_dict)
+
+
+# In[ ]:
+
+
+df = pd.DataFrame.from_dict(data_dict_all)
+
+
+# In[ ]:
+
+
+df.to_excel(f'test_output_{prefix}.xlsx', index=False)
 
 
 # In[ ]:
