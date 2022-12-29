@@ -10,13 +10,83 @@
 #!pip install -r requirements-torch-cu111.txt --extra-index-url https://download.pytorch.org/whl/lts/1.8/cu111
 
 
+# In[ ]:
+
+
+import gdown
+
+
+# In[ ]:
+
+
+prefix = 'final'
+url = 'https://drive.google.com/uc?id=1e9HhCMT1w6B3vWwQVZp0a6ljklithlRJ'
+
+
+# In[ ]:
+
+
+scripts_file = f'data/json.zip'
+gdown.download(url, scripts_file, quiet=False)
+
+
+# In[ ]:
+
+
+get_ipython().system("zipu --extract --encoding cp949 'data/json.zip' 'data/json'")
+
+
+# In[ ]:
+
+
+from glob import glob
+import json
+
+
+# In[ ]:
+
+
+json_files = sorted(glob('data/json/*/*.json'))
+
+
+# In[ ]:
+
+
+len(json_files)
+
+
+# In[ ]:
+
+
+data_dict = []
+for json_file in json_files:
+    with open(json_file) as f:
+        story_dict = json.load(f)
+    units = story_dict['units']
+    for unit in units:
+        unit_dict = {}
+        unit_dict['uid'] = unit['id']
+        unit_dict['storyline'] = unit['storyline']
+        unit_dict['scripts'] = []
+        for story_script in unit['story_scripts']:
+            unit_dict['scripts'].append(story_script['content'])
+        data_dict.append(unit_dict)
+
+
+# In[ ]:
+
+
+len(data_dict)
+
+
 # # Data preperation
 
 # In[ ]:
 
 
 prefix = 'final'
-url = 'https://drive.google.com/uc?id=1x6HuyJTQcNydJ9P-fJl2LtxnnAu9Vp8N'
+url = 'https://drive.google.com/uc?id=1Bts2h-QPQ5-m7sDIXgVRfumjl-8XHOst'
+#url = 'https://drive.google.com/uc?id=1x6HuyJTQcNydJ9P-fJl2LtxnnAu9Vp8N'
 #prefix = '1cycle'
 #url = 'https://drive.google.com/uc?id=1j46elyFZtkmnmCehlntMi0eX0Tp5nnav'
 #prefix = 'helper'
@@ -28,10 +98,16 @@ url = 'https://drive.google.com/uc?id=1x6HuyJTQcNydJ9P-fJl2LtxnnAu9Vp8N'
 # In[ ]:
 
 
-import gdown
-
 scripts_file = f'data/scripts_{prefix}.json'
-gdown.download(url, scripts_file, quiet=False)
+zip_file = f'data/scripts_{prefix}.zip'
+gdown.download(url, zip_file, quiet=False)
+
+
+# In[ ]:
+
+
+get_ipython().system('unzip $zip_file')
+get_ipython().system("mv -f 'final.json' $scripts_file")
 
 
 # In[ ]:
@@ -110,7 +186,7 @@ for i, unit_data in enumerate(data_dict):
         continue
     positive_sessions.append([unit_contexts, unit_narrative, 1])
     positive_str.append(unit_data)
-    positive_ids.append(i)
+    positive_ids.append(unit_data['uid'])
 print("all suitable sessions: ", len(positive_sessions))
 
 # reproducibility를 위한 random seed 설정
@@ -121,6 +197,12 @@ np.random.seed(42)
 np.random.shuffle(positive_str)
 np.random.seed(42)
 np.random.shuffle(positive_ids)
+
+
+# In[ ]:
+
+
+positive_ids[0:10]
 
 
 # In[ ]:
