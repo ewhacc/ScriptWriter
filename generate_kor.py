@@ -33,7 +33,7 @@ gdown.download(url, scripts_file, quiet=False)
 # In[ ]:
 
 
-get_ipython().system("zipu --extract --encoding cp949 'data/json.zip' 'data/json'")
+#!zipu --extract --encoding cp949 'data/json.zip' 'data/json'
 
 
 # In[ ]:
@@ -426,7 +426,7 @@ for i_test, (context_id, narrative_id, _) in enumerate(test):
         context = context_id[:i]
         response = context_id[i]
         test_all.append([context, response, narrative_id, response, 1])
-        test_all_ids.append(i_test)
+        test_all_ids.append(test_ids[i_test])
         count = 0
         negative_samples = []
         # fix count 버그
@@ -439,21 +439,21 @@ for i_test, (context_id, narrative_id, _) in enumerate(test):
                 if len(response) != len(random_response):
                     test_all.append([context, random_response, narrative_id, response, 0])
                     negative_samples.append(random_response)
-                    test_all_ids.append(i_test)
+                    test_all_ids.append(test_ids[i_test])
                     count += 1
                 else:
                     for idx, id in enumerate(response):
                         if id != random_response[idx]:
                             test_all.append([context, random_response, narrative_id, response, 0])
                             negative_samples.append(random_response)
-                            test_all_ids.append(i_test)
+                            test_all_ids.append(test_ids[i_test])
                             count += 1
                             break
         if response == [EOS_ID]:
             test_all.append([context, [EOS_ID], narrative_id, response, 1])
         else:
             test_all.append([context, [EOS_ID], narrative_id, response, 0])
-        test_all_ids.append(i_test)
+        test_all_ids.append(test_ids[i_test])
 print(test_all[0], test_all[1], test_all[2])
 
 
