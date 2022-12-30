@@ -877,7 +877,7 @@ df = pd.DataFrame.from_dict(result_dict)
 # In[ ]:
 
 
-df.to_excel(f'test_result_{dataset_name}.xlsx', index=False)
+df.to_excel(f'result_{dataset_name}.xlsx', index=False)
 
 
 # In[ ]:
