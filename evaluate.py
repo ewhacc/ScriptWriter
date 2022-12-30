@@ -815,7 +815,7 @@ len(output.label_ids)
 
 
 metric_res = compute_metrics((output.predictions, output.label_ids))
-metric_res
+print(metric_res)
 
 
 # In[ ]:
