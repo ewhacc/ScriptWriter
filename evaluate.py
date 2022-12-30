@@ -789,8 +789,101 @@ trainer._load_from_checkpoint(f"{model_checkpoint}-{dataset_name}/checkpoint-bes
 # In[ ]:
 
 
-metrics = trainer.evaluate(eval_dataset=datasets["test"])
-print(metrics)
+#metrics = trainer.evaluate(eval_dataset=datasets["test"])
+#print(metrics)
+
+
+# In[ ]:
+
+
+output = trainer.predict(test_dataset=datasets['test'])
+
+
+# In[ ]:
+
+
+len(output.predictions)
+
+
+# In[ ]:
+
+
+len(output.label_ids)
+
+
+# In[ ]:
+
+
+metric_res = compute_metrics((output.predictions, output.label_ids))
+metric_res
+
+
+# In[ ]:
+
+
+import pandas as pd
+try:
+    __IPYTHON__
+    from tqdm.notebook import tqdm
+except NameError:
+    from tqdm import tqdm
+
+
+# In[ ]:
+
+
+df = pd.read_excel(f'test_output_{dataset_name}.xlsx')
+
+
+# In[ ]:
+
+
+result_dict = df.to_dict(orient='records')
+
+
+# In[ ]:
+
+
+for i, res in enumerate(tqdm(result_dict)):
+    res['score'] = output.predictions[i]
+    if i%10 == 0:
+        metric_res = compute_metrics((output.predictions[i:i+10],
+                                      output.label_ids[i:i+10]))
+        res['r2@1'] = metric_res['r2@1']
+        res['r10@1'] = metric_res['r10@1']
+        res['r10@2'] = metric_res['r10@2']
+        res['r10@5'] = metric_res['r10@5']
+        res['mrr'] = metric_res['mrr']
+    else:
+        res['r2@1'] = ''
+        res['r10@1'] = ''
+        res['r10@2'] = ''
+        res['r10@5'] = ''
+        res['mrr'] = ''
+
+
+# In[ ]:
+
+
+result_dict[0]
+
+
+# In[ ]:
+
+
+df = pd.DataFrame.from_dict(result_dict)
+
+
+# In[ ]:
+
+
+df.to_excel(f'test_result_{dataset_name}.xlsx', index=False)
+
+
+# In[ ]:
+
+
+#df.loc[df['r2@1']!= '']
 
 
 # In[ ]:
