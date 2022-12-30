@@ -20,7 +20,8 @@ import gdown
 
 
 prefix = 'final'
-url = 'https://drive.google.com/uc?id=1e9HhCMT1w6B3vWwQVZp0a6ljklithlRJ'
+#url = 'https://drive.google.com/uc?id=1e9HhCMT1w6B3vWwQVZp0a6ljklithlRJ'
+url = 'https://drive.google.com/uc?id=1QMz01ZTxOt9cZSZmC9YlAdaCAmLVe9z4'
 
 
 # In[ ]:
@@ -33,7 +34,7 @@ gdown.download(url, scripts_file, quiet=False)
 # In[ ]:
 
 
-#!zipu --extract --encoding cp949 'data/json.zip' 'data/json'
+get_ipython().system("zipu --extract --encoding cp949 'data/json.zip' 'data'")
 
 
 # In[ ]:
@@ -67,9 +68,9 @@ for json_file in json_files:
         unit_dict = {}
         unit_dict['uid'] = unit['id']
         unit_dict['storyline'] = unit['storyline']
-        unit_dict['scripts'] = []
+        unit_dict['script'] = []
         for story_script in unit['story_scripts']:
-            unit_dict['scripts'].append(story_script['content'])
+            unit_dict['script'].append(story_script['content'])
         data_dict.append(unit_dict)
 
 
@@ -84,8 +85,8 @@ len(data_dict)
 # In[ ]:
 
 
-prefix = 'final'
-url = 'https://drive.google.com/uc?id=1Bts2h-QPQ5-m7sDIXgVRfumjl-8XHOst'
+#prefix = 'final'
+#url = 'https://drive.google.com/uc?id=1Bts2h-QPQ5-m7sDIXgVRfumjl-8XHOst'
 #url = 'https://drive.google.com/uc?id=1x6HuyJTQcNydJ9P-fJl2LtxnnAu9Vp8N'
 #prefix = '1cycle'
 #url = 'https://drive.google.com/uc?id=1j46elyFZtkmnmCehlntMi0eX0Tp5nnav'
@@ -98,25 +99,25 @@ url = 'https://drive.google.com/uc?id=1Bts2h-QPQ5-m7sDIXgVRfumjl-8XHOst'
 # In[ ]:
 
 
-scripts_file = f'data/scripts_{prefix}.json'
-zip_file = f'data/scripts_{prefix}.zip'
-gdown.download(url, zip_file, quiet=False)
+#scripts_file = f'data/scripts_{prefix}.json'
+#zip_file = f'data/scripts_{prefix}.zip'
+#gdown.download(url, zip_file, quiet=False)
 
 
 # In[ ]:
 
 
-get_ipython().system('unzip $zip_file')
-get_ipython().system("mv -f 'final.json' $scripts_file")
+#!unzip $zip_file 
+#!mv -f 'final.json' $scripts_file
 
 
 # In[ ]:
 
 
-import json
+#import json
 
-with open(scripts_file) as f:
-    data_dict = json.load(f)
+#with open(scripts_file) as f:
+#    data_dict = json.load(f)
 
 
 # In[ ]:
