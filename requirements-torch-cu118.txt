@@ -9,8 +9,10 @@
 # pip install -r requirements-torch-cu116.txt --extra-index-url https://download.pytorch.org/whl/cu116
 # pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
 
-#torch==1.12.1+cu116
-#torch
+# pip install torch --pre --extra-index-url https://download.pytorch.org/whl/nightly/cu118
+# pip install -r requirements-torch-cu118.txt --extra-index-url https://download.pytorch.org/whl/nightly/cu118
+
+#torch==2.0.0.dev20221225+cu118
 transformers
 gensim
 datasets
