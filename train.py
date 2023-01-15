@@ -783,14 +783,14 @@ get_ipython().system('mv $trainer.state.best_model_checkpoint $save_path')
 # In[ ]:
 
 
-trainer._load_from_checkpoint(f"{model_checkpoint}-{dataset_name}/checkpoint-best")
+#trainer._load_from_checkpoint(f"{model_checkpoint}-{dataset_name}/checkpoint-best")
 
 
 # In[ ]:
 
 
-metrics = trainer.evaluate(eval_dataset=datasets["test"])
-print(metrics)
+#metrics = trainer.evaluate(eval_dataset=datasets["test"])
+#print(metrics)
 
 
 # In[ ]:
