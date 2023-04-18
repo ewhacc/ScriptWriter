@@ -22,3 +22,4 @@ jupyter
 gpustat
 openpyxl
 nbconvert
+ZipUnicode

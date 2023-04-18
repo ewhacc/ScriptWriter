@@ -20,22 +20,20 @@ import gdown
 
 
 prefix = 'final'
-#url = 'https://drive.google.com/uc?id=1e9HhCMT1w6B3vWwQVZp0a6ljklithlRJ'
-#url = 'https://drive.google.com/uc?id=1QMz01ZTxOt9cZSZmC9YlAdaCAmLVe9z4'
-url = 'https://drive.google.com/uc?id=1G5KrqItdyqLU2VhOq5LpRxvyo9UfOI6l'
+url = 'https://drive.google.com/uc?id=1akrTOnfP29ycTR7dMZDEPFrprlWZvVAD'
 
 
 # In[ ]:
 
 
 scripts_file = f'data/json.zip'
-gdown.download(url, scripts_file, quiet=False)
+#gdown.download(url, scripts_file, quiet=False)
 
 
 # In[ ]:
 
 
-get_ipython().system("zipu --extract --encoding cp949 'data/json.zip' 'data/json'")
+#get_ipython().system("zipu --extract --encoding cp949 'data/json.zip' 'data/json'")
 
 
 # In[ ]:
