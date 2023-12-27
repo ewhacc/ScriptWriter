@@ -3,59 +3,74 @@
 
 # # Install
 
-# In[ ]:
+# In[1]:
 
 
 # cuda 11.1
 #!pip install -r requirements-torch-cu111.txt --extra-index-url https://download.pytorch.org/whl/lts/1.8/cu111
 
 
-# In[ ]:
+# In[2]:
 
 
-import gdown
+#!pip list | grep -E "gdown"
 
 
-# In[ ]:
+# In[3]:
+
+
+#import gdown
+
+
+# In[4]:
 
 
 prefix = 'final'
-url = 'https://drive.google.com/uc?id=1akrTOnfP29ycTR7dMZDEPFrprlWZvVAD'
+# AI hub 업로드 용 변경
+#url = 'https://drive.google.com/uc?id=1qQQbjFd0c7unV-S18t-7x3KUw5OFVl3P'
 
 
-# In[ ]:
+# In[5]:
 
 
-scripts_file = f'data/json.zip'
+#scripts_file = f'data/json_split.zip'
 #gdown.download(url, scripts_file, quiet=False)
 
 
-# In[ ]:
+# In[6]:
 
 
-#get_ipython().system("zipu --extract --encoding cp949 'data/json.zip' 'data/json'")
+#!zipu --extract --encoding cp949 'data/json_split.zip' 'data/'
 
 
-# In[ ]:
+# In[8]:
+
+
+get_ipython().system('du -sh data/train')
+get_ipython().system('du -sh data/validation')
+#!du -sh data/test
+
+
+# In[9]:
 
 
 from glob import glob
 import json
 
 
-# In[ ]:
+# In[10]:
 
 
-json_files = sorted(glob('data/json/*/*.json'))
+json_files = sorted(glob('data/train/*/*.json'))
 
 
-# In[ ]:
+# In[11]:
 
 
 len(json_files)
 
 
-# In[ ]:
+# In[12]:
 
 
 data_dict = []
@@ -73,7 +88,74 @@ for json_file in json_files:
         data_dict.append(unit_dict)
 
 
-# In[ ]:
+# In[13]:
+
+
+train_num = len(data_dict)
+print('train num =', train_num)
+
+
+# In[14]:
+
+
+json_files = sorted(glob('data/validation/*/*.json'))
+print(len(json_files))
+
+
+# In[15]:
+
+
+val_num = 0
+for json_file in json_files:
+    with open(json_file) as f:
+        story_dict = json.load(f)
+    units = story_dict['units']
+    for unit in units:
+        unit_dict = {}
+        unit_dict['uid'] = unit['id']
+        unit_dict['storyline'] = unit['storyline']
+        unit_dict['script'] = []
+        for story_script in unit['story_scripts']:
+            unit_dict['script'].append(story_script['content'])
+        data_dict.append(unit_dict)
+        val_num += 1
+print('val_num =', val_num)
+
+
+# In[16]:
+
+
+print('val_num =', val_num)
+
+
+# In[17]:
+
+
+json_files = sorted(glob('data/test/*/*.json'))
+print(len(json_files))
+
+
+# In[18]:
+
+
+test_num = 0
+for json_file in json_files:
+    with open(json_file) as f:
+        story_dict = json.load(f)
+    units = story_dict['units']
+    for unit in units:
+        unit_dict = {}
+        unit_dict['uid'] = unit['id']
+        unit_dict['storyline'] = unit['storyline']
+        unit_dict['script'] = []
+        for story_script in unit['story_scripts']:
+            unit_dict['script'].append(story_script['content'])
+        data_dict.append(unit_dict)
+        test_num += 1
+print('test num =', test_num)
+
+
+# In[19]:
 
 
 len(data_dict)
@@ -81,7 +163,7 @@ len(data_dict)
 
 # # Data preperation
 
-# In[ ]:
+# In[20]:
 
 
 #prefix = 'final'
@@ -95,7 +177,7 @@ len(data_dict)
 
 # ## 스토리헬퍼 샘플 데이터 다운로드
 
-# In[ ]:
+# In[21]:
 
 
 #scripts_file = f'data/scripts_{prefix}.json'
@@ -103,14 +185,14 @@ len(data_dict)
 #gdown.download(url, zip_file, quiet=False)
 
 
-# In[ ]:
+# In[22]:
 
 
 #!unzip $zip_file 
 #!mv -f 'final.json' $scripts_file
 
 
-# In[ ]:
+# In[23]:
 
 
 #import json
@@ -119,7 +201,7 @@ len(data_dict)
 #    data_dict = json.load(f)
 
 
-# In[ ]:
+# In[24]:
 
 
 # 샘플 데이터 출력
@@ -130,7 +212,7 @@ data_dict[0]
 # 1. `\n`을 제거한다. "부엌에서 일하게 된 마리오\n인부들 사이에서 인기만점인 베아트리체"  
 #    ==> 필요없는 것 같음.
 
-# In[ ]:
+# In[25]:
 
 
 # 비정상적 white character가 없는지 확인
@@ -149,7 +231,7 @@ for idx, data in enumerate(data_dict):
 
 # ### kobigbird pretrained model을 이용한 tokenize
 
-# In[ ]:
+# In[26]:
 
 
 from transformers import AutoTokenizer
@@ -158,7 +240,7 @@ tokenizer = AutoTokenizer.from_pretrained('monologg/kobigbird-bert-base')
 
 # # Word2Vec
 
-# In[ ]:
+# In[27]:
 
 
 import numpy as np
@@ -199,22 +281,22 @@ np.random.seed(42)
 np.random.shuffle(positive_ids)
 
 
-# In[ ]:
+# In[28]:
 
 
 positive_ids[0:10]
 
 
-# In[ ]:
+# In[29]:
 
 
-train_num = int(len(positive_sessions) * 0.9)
-dev_test_num = int(len(positive_sessions) * 0.05)
-train_sessions, dev_sessions, test_sessions = positive_sessions[:train_num], positive_sessions[train_num: train_num + dev_test_num], positive_sessions[train_num + dev_test_num:]
+#train_num = int(len(positive_sessions) * 0.9)
+#dev_test_num = int(len(positive_sessions) * 0.05)
+train_sessions, dev_sessions, test_sessions = positive_sessions[:train_num], positive_sessions[train_num: train_num + val_num], positive_sessions[train_num + val_num:]
 print('number of train =', len(train_sessions), ', val =', len(dev_sessions), ', test =', len(test_sessions))
 
 
-# In[ ]:
+# In[30]:
 
 
 train_texts = []
@@ -224,7 +306,7 @@ for train_session in train_sessions:
 print('number of word2vec training sentences =', len(train_texts))
 
 
-# In[ ]:
+# In[31]:
 
 
 from gensim.models import Word2Vec
@@ -233,7 +315,7 @@ from gensim.models import Word2Vec
 model = Word2Vec(sentences = train_texts, vector_size = 200, window = 7, min_count = 5, workers = 4)
 
 
-# In[ ]:
+# In[32]:
 
 
 print('total num of words =', len(model.wv.key_to_index))
@@ -241,7 +323,7 @@ print('first word = "%s"'%model.wv.index_to_key[0])
 print('last word = "%s"'%model.wv.index_to_key[-1])
 
 
-# In[ ]:
+# In[33]:
 
 
 # word2vec이 잘 학습되었는지 여러가지 테스트를 수행하자.
@@ -252,7 +334,7 @@ print(model.wv.most_similar("가족"))
 # 
 # `embeddings.pkl`과 `vocab.txt`를 생성한다.
 
-# In[ ]:
+# In[34]:
 
 
 with open(f"data/vocab_{prefix}.txt", "w", encoding="utf-8") as file:
@@ -260,7 +342,7 @@ with open(f"data/vocab_{prefix}.txt", "w", encoding="utf-8") as file:
         file.write('%s\t%i\n'%(key, i))
 
 
-# In[ ]:
+# In[35]:
 
 
 import pickle
@@ -273,7 +355,7 @@ with open(f'data/embeddings_{prefix}.pkl', 'wb') as f:
     pickle.dump(new_embeddings, f)
 
 
-# In[ ]:
+# In[36]:
 
 
 model.save(f"data/word2vec_{prefix}.model")
@@ -281,14 +363,14 @@ model.save(f"data/word2vec_{prefix}.model")
 
 # # 학습 데이터셋 준비
 
-# In[ ]:
+# In[37]:
 
 
 EOS_ID = model.wv.key_to_index['[SEP]']+1
 UNK_ID = model.wv.key_to_index['[UNK]']+1
 
 
-# In[ ]:
+# In[38]:
 
 
 import pickle
@@ -301,7 +383,7 @@ with open(f"data/vocab_{prefix}.txt", "r", encoding="utf-8") as fr:
         vocab[line[0]] = idx + 1
 
 
-# In[ ]:
+# In[39]:
 
 
 # sample id 출력 확인
@@ -310,7 +392,7 @@ vocab['가족']
 
 # **positive data 준비**
 
-# In[ ]:
+# In[40]:
 
 
 positive_data = []
@@ -333,21 +415,20 @@ for unit, unit_str in zip(positive_sessions, positive_str):
     positive_str2.append(unit_str)
 
 
-# In[ ]:
+# In[41]:
 
 
 len(positive_str), len(positive_str2), len(positive_ids)
 
 
-# In[ ]:
+# In[42]:
 
 
-dev_test_num = int(len(positive_data) * 0.05)
-train, dev, test = positive_data[:train_num], positive_data[train_num: train_num + dev_test_num], positive_data[train_num + dev_test_num:]
-train_ids, dev_ids, test_ids = positive_ids[:train_num], positive_ids[train_num: train_num + dev_test_num], positive_ids[train_num + dev_test_num:]
+train, dev, test = positive_data[:train_num], positive_data[train_num: train_num + val_num], positive_data[train_num + val_num:]
+train_ids, dev_ids, test_ids = positive_ids[:train_num], positive_ids[train_num: train_num + val_num], positive_ids[train_num + val_num:]
 
 
-# In[ ]:
+# In[43]:
 
 
 import random
@@ -377,15 +458,17 @@ print(train_all[0])
 print(train_all[1])
 
 
-# In[ ]:
+# In[44]:
 
 
-for context_id, narrative_id, _ in dev:
+dev_all_ids = []
+for i_dev, (context_id, narrative_id, _) in enumerate(dev):
     num_context = len(context_id)
     for i in range(1, num_context):
         context = context_id[:i]
         response = context_id[i]
         dev_all.append([context, response, narrative_id, response, 1])
+        dev_all_ids.append(dev_ids[i_dev])
         count = 0
         negative_samples = []
         # fix count 버그
@@ -397,23 +480,26 @@ for context_id, narrative_id, _ in dev:
             if random_response not in negative_samples and random_response != [EOS_ID]:
                 if len(response) != len(random_response):
                     dev_all.append([context, random_response, narrative_id, response, 0])
-                    count += 1
                     negative_samples.append(random_response)
+                    dev_all_ids.append(dev_ids[i_dev])
+                    count += 1
                 else:
                     for idx, wid in enumerate(response):
                         if wid != random_response[idx]:
                             dev_all.append([context, random_response, narrative_id, response, 0])
-                            count += 1
                             negative_samples.append(random_response)
+                            dev_all_ids.append(dev_ids[i_dev])
+                            count += 1
                             break
         if response == [EOS_ID]:
             dev_all.append([context, [EOS_ID], narrative_id, response, 1])
         else:
             dev_all.append([context, [EOS_ID], narrative_id, response, 0])
+        dev_all_ids.append(dev_ids[i_dev])
 print(dev_all[0], dev_all[1], dev_all[2])
 
 
-# In[ ]:
+# In[46]:
 
 
 test_all = []
@@ -454,16 +540,17 @@ for i_test, (context_id, narrative_id, _) in enumerate(test):
         else:
             test_all.append([context, [EOS_ID], narrative_id, response, 0])
         test_all_ids.append(test_ids[i_test])
-print(test_all[0], test_all[1], test_all[2])
+if test_num > 0:
+    print(test_all[0], test_all[1], test_all[2])
 
 
-# In[ ]:
+# In[47]:
 
 
 len(test_all_ids), len(test_all)
 
 
-# In[ ]:
+# In[48]:
 
 
 print('total train count =', len(train_all))
@@ -471,13 +558,13 @@ print('total val count =', len(dev_all))
 print('total test count =', len(test_all))
 
 
-# In[ ]:
+# In[49]:
 
 
 np.sum(np.array(test_num_context))
 
 
-# In[ ]:
+# In[50]:
 
 
 def get_numpy_from_nonfixed_2d_array(aa, max_sentence_len=50, max_num_utterance=10, padding_value=0):
@@ -513,7 +600,7 @@ cc_test_data = [
 #get_numpy_from_nonfixed_2d_array(cc_test_data, max_sentence_len=5, max_num_utterance=4)
 
 
-# In[ ]:
+# In[54]:
 
 
 try:
@@ -534,7 +621,6 @@ def pad_process(data, max_sentence_len=50, max_num_utterance=10):
         narrative.append(get_numpy_from_nonfixed_1d_array(unit[2]))
         gt_response.append(get_numpy_from_nonfixed_1d_array(unit[3]))
         y_true.append(unit[4])
-        
     utterance = np.stack(utterance)
     response = np.stack(response)
     narrative = np.stack(narrative)
@@ -544,12 +630,15 @@ def pad_process(data, max_sentence_len=50, max_num_utterance=10):
 
 train_pad = pad_process(train_all)
 dev_pad = pad_process(dev_all)
-test_pad = pad_process(test_all)
+if test_num > 0:    
+    test_pad = pad_process(test_all)
+else:
+    test_pad = ([], [], [], [], [])
 
 
 # **학습데이터셋 저장**
 
-# In[ ]:
+# In[55]:
 
 
 with open(f'data/train_{prefix}.pkl', 'wb') as f:
@@ -560,7 +649,7 @@ with open(f'data/test_{prefix}.pkl', 'wb') as f:
     pickle.dump(test_pad, f)
 
 
-# In[ ]:
+# In[56]:
 
 
 with open(f'data/positive_{prefix}.pkl', "wb") as f:
@@ -569,14 +658,14 @@ with open(f'data/positive_str_{prefix}.pkl', "wb") as f:
     pickle.dump(positive_str2, f)
 
 
-# In[ ]:
+# In[57]:
 
 
 with open(f'data/test_all_ids_{prefix}.pkl', "wb") as f:
     pickle.dump(test_all_ids, f)
 
 
-# In[ ]:
+# In[58]:
 
 
 for unit, unit_str in zip (positive_data, positive_str2):
@@ -589,7 +678,7 @@ for unit, unit_str in zip (positive_data, positive_str2):
     #break
 
 
-# In[ ]:
+# In[59]:
 
 
 def get_dat(index, data_pad, ids = None):
@@ -646,20 +735,21 @@ def browse_dat(index, data_pad):
 #browse_dat(0, train_pad)
 
 
-# In[ ]:
+# In[61]:
 
 
-for i in range(110,120): 
-    browse_dat(i, test_pad)
+if test_num > 0:
+    for i in range(110,120): 
+        browse_dat(i, test_pad)
 
 
-# In[ ]:
+# In[62]:
 
 
 import pandas as pd
 
 
-# In[ ]:
+# In[63]:
 
 
 column_names = ['id', 'Narrative', 'Response', 'GT_Response', 'y_true', 'score', 'R2@1', 'R10@1', 'R10@2', 'R10@5', 'MRR', 'AVG']
@@ -669,7 +759,7 @@ print(column_names)
 df = pd.DataFrame(columns=column_names)
 
 
-# In[ ]:
+# In[64]:
 
 
 n = len(test_all_ids)
@@ -689,16 +779,61 @@ for i in tqdm(range(n)):
     data_dict_all.append(data_dict)
 
 
-# In[ ]:
+# In[65]:
 
 
 df = pd.DataFrame.from_dict(data_dict_all)
 
 
-# In[ ]:
+# In[66]:
 
 
-df.to_excel(f'test_output_{prefix}.xlsx', index=False)
+df
+
+
+# In[67]:
+
+
+# output rows are too large for excel
+# save to csv
+df.to_csv(f'test_output_{prefix}.csv', index=False)
+
+
+# In[68]:
+
+
+column_names = ['id', 'Narrative', 'Response', 'GT_Response', 'y_true', 'score', 'R2@1', 'R10@1', 'R10@2', 'R10@5', 'MRR', 'AVG']
+for i in range(10):
+    column_names.append('U%02d'%(i+1))
+print(column_names)
+df = pd.DataFrame(columns=column_names)
+
+
+# In[69]:
+
+
+n = len(dev_all_ids)
+data_dict_all = []
+for i in tqdm(range(n)):
+    id_, narrative_str, response_str, gt_response_str, y_true, utterance_str = get_dat(i, dev_pad, dev_all_ids)
+    data_dict = { }
+    data_dict['id'] = id_
+    data_dict['Narrative'] = narrative_str
+    data_dict['Response'] = response_str
+    data_dict['GT_Response'] = gt_response_str
+    data_dict['y_true'] = y_true
+    for i in range(10):
+        data_dict[f'U%02d'%(i+1)] = utterance_str[i]
+    #new_row = pd.Series(data_dict)
+    #df = pd.concat([df, new_row.to_frame().T], ignore_index=True)
+    data_dict_all.append(data_dict)
+
+
+# In[70]:
+
+
+df = pd.DataFrame.from_dict(data_dict_all)
+df.to_csv(f'dev_output_{prefix}.csv', index=False)
 
 
 # In[ ]:
