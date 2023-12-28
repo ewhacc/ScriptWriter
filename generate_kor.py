@@ -43,7 +43,7 @@ prefix = 'final'
 #!zipu --extract --encoding cp949 'data/json_split.zip' 'data/'
 
 
-# In[8]:
+# In[7]:
 
 
 get_ipython().system('du -sh data/train')
@@ -51,26 +51,26 @@ get_ipython().system('du -sh data/validation')
 #!du -sh data/test
 
 
-# In[9]:
+# In[8]:
 
 
 from glob import glob
 import json
 
 
-# In[10]:
+# In[9]:
 
 
 json_files = sorted(glob('data/train/*/*.json'))
 
 
-# In[11]:
+# In[10]:
 
 
 len(json_files)
 
 
-# In[12]:
+# In[11]:
 
 
 data_dict = []
@@ -88,21 +88,21 @@ for json_file in json_files:
         data_dict.append(unit_dict)
 
 
-# In[13]:
+# In[12]:
 
 
 train_num = len(data_dict)
 print('train num =', train_num)
 
 
-# In[14]:
+# In[13]:
 
 
 json_files = sorted(glob('data/validation/*/*.json'))
 print(len(json_files))
 
 
-# In[15]:
+# In[14]:
 
 
 val_num = 0
@@ -122,20 +122,14 @@ for json_file in json_files:
 print('val_num =', val_num)
 
 
-# In[16]:
-
-
-print('val_num =', val_num)
-
-
-# In[17]:
+# In[15]:
 
 
 json_files = sorted(glob('data/test/*/*.json'))
 print(len(json_files))
 
 
-# In[18]:
+# In[16]:
 
 
 test_num = 0
@@ -155,7 +149,7 @@ for json_file in json_files:
 print('test num =', test_num)
 
 
-# In[19]:
+# In[17]:
 
 
 len(data_dict)
@@ -163,7 +157,7 @@ len(data_dict)
 
 # # Data preperation
 
-# In[20]:
+# In[18]:
 
 
 #prefix = 'final'
@@ -177,7 +171,7 @@ len(data_dict)
 
 # ## 스토리헬퍼 샘플 데이터 다운로드
 
-# In[21]:
+# In[19]:
 
 
 #scripts_file = f'data/scripts_{prefix}.json'
@@ -185,14 +179,14 @@ len(data_dict)
 #gdown.download(url, zip_file, quiet=False)
 
 
-# In[22]:
+# In[20]:
 
 
 #!unzip $zip_file 
 #!mv -f 'final.json' $scripts_file
 
 
-# In[23]:
+# In[21]:
 
 
 #import json
@@ -201,7 +195,7 @@ len(data_dict)
 #    data_dict = json.load(f)
 
 
-# In[24]:
+# In[22]:
 
 
 # 샘플 데이터 출력
@@ -212,7 +206,7 @@ data_dict[0]
 # 1. `\n`을 제거한다. "부엌에서 일하게 된 마리오\n인부들 사이에서 인기만점인 베아트리체"  
 #    ==> 필요없는 것 같음.
 
-# In[25]:
+# In[23]:
 
 
 # 비정상적 white character가 없는지 확인
@@ -231,7 +225,7 @@ for idx, data in enumerate(data_dict):
 
 # ### kobigbird pretrained model을 이용한 tokenize
 
-# In[26]:
+# In[24]:
 
 
 from transformers import AutoTokenizer
@@ -240,7 +234,7 @@ tokenizer = AutoTokenizer.from_pretrained('monologg/kobigbird-bert-base')
 
 # # Word2Vec
 
-# In[27]:
+# In[25]:
 
 
 import numpy as np
@@ -273,21 +267,23 @@ print("all suitable sessions: ", len(positive_sessions))
 
 # reproducibility를 위한 random seed 설정
 np.random.seed(42)
+
+# split policy 변경으로 shuffle 안함
 # random shuffle data
-np.random.shuffle(positive_sessions)
-np.random.seed(42)
-np.random.shuffle(positive_str)
-np.random.seed(42)
-np.random.shuffle(positive_ids)
+#np.random.shuffle(positive_sessions)
+#np.random.seed(42)
+#np.random.shuffle(positive_str)
+#np.random.seed(42)
+#np.random.shuffle(positive_ids)
 
 
-# In[28]:
+# In[26]:
 
 
 positive_ids[0:10]
 
 
-# In[29]:
+# In[27]:
 
 
 #train_num = int(len(positive_sessions) * 0.9)
@@ -296,7 +292,7 @@ train_sessions, dev_sessions, test_sessions = positive_sessions[:train_num], pos
 print('number of train =', len(train_sessions), ', val =', len(dev_sessions), ', test =', len(test_sessions))
 
 
-# In[30]:
+# In[28]:
 
 
 train_texts = []
@@ -306,7 +302,7 @@ for train_session in train_sessions:
 print('number of word2vec training sentences =', len(train_texts))
 
 
-# In[31]:
+# In[29]:
 
 
 from gensim.models import Word2Vec
@@ -315,7 +311,7 @@ from gensim.models import Word2Vec
 model = Word2Vec(sentences = train_texts, vector_size = 200, window = 7, min_count = 5, workers = 4)
 
 
-# In[32]:
+# In[30]:
 
 
 print('total num of words =', len(model.wv.key_to_index))
@@ -323,7 +319,7 @@ print('first word = "%s"'%model.wv.index_to_key[0])
 print('last word = "%s"'%model.wv.index_to_key[-1])
 
 
-# In[33]:
+# In[31]:
 
 
 # word2vec이 잘 학습되었는지 여러가지 테스트를 수행하자.
@@ -334,7 +330,7 @@ print(model.wv.most_similar("가족"))
 # 
 # `embeddings.pkl`과 `vocab.txt`를 생성한다.
 
-# In[34]:
+# In[32]:
 
 
 with open(f"data/vocab_{prefix}.txt", "w", encoding="utf-8") as file:
@@ -342,7 +338,7 @@ with open(f"data/vocab_{prefix}.txt", "w", encoding="utf-8") as file:
         file.write('%s\t%i\n'%(key, i))
 
 
-# In[35]:
+# In[33]:
 
 
 import pickle
@@ -355,7 +351,7 @@ with open(f'data/embeddings_{prefix}.pkl', 'wb') as f:
     pickle.dump(new_embeddings, f)
 
 
-# In[36]:
+# In[34]:
 
 
 model.save(f"data/word2vec_{prefix}.model")
@@ -363,14 +359,14 @@ model.save(f"data/word2vec_{prefix}.model")
 
 # # 학습 데이터셋 준비
 
-# In[37]:
+# In[35]:
 
 
 EOS_ID = model.wv.key_to_index['[SEP]']+1
 UNK_ID = model.wv.key_to_index['[UNK]']+1
 
 
-# In[38]:
+# In[36]:
 
 
 import pickle
@@ -383,7 +379,7 @@ with open(f"data/vocab_{prefix}.txt", "r", encoding="utf-8") as fr:
         vocab[line[0]] = idx + 1
 
 
-# In[39]:
+# In[37]:
 
 
 # sample id 출력 확인
@@ -392,7 +388,7 @@ vocab['가족']
 
 # **positive data 준비**
 
-# In[40]:
+# In[38]:
 
 
 positive_data = []
@@ -415,20 +411,20 @@ for unit, unit_str in zip(positive_sessions, positive_str):
     positive_str2.append(unit_str)
 
 
-# In[41]:
+# In[39]:
 
 
 len(positive_str), len(positive_str2), len(positive_ids)
 
 
-# In[42]:
+# In[40]:
 
 
 train, dev, test = positive_data[:train_num], positive_data[train_num: train_num + val_num], positive_data[train_num + val_num:]
 train_ids, dev_ids, test_ids = positive_ids[:train_num], positive_ids[train_num: train_num + val_num], positive_ids[train_num + val_num:]
 
 
-# In[43]:
+# In[41]:
 
 
 import random
@@ -458,7 +454,7 @@ print(train_all[0])
 print(train_all[1])
 
 
-# In[44]:
+# In[42]:
 
 
 dev_all_ids = []
@@ -499,7 +495,7 @@ for i_dev, (context_id, narrative_id, _) in enumerate(dev):
 print(dev_all[0], dev_all[1], dev_all[2])
 
 
-# In[46]:
+# In[43]:
 
 
 test_all = []
@@ -544,13 +540,13 @@ if test_num > 0:
     print(test_all[0], test_all[1], test_all[2])
 
 
-# In[47]:
+# In[44]:
 
 
 len(test_all_ids), len(test_all)
 
 
-# In[48]:
+# In[45]:
 
 
 print('total train count =', len(train_all))
@@ -558,13 +554,13 @@ print('total val count =', len(dev_all))
 print('total test count =', len(test_all))
 
 
-# In[49]:
+# In[46]:
 
 
 np.sum(np.array(test_num_context))
 
 
-# In[50]:
+# In[47]:
 
 
 def get_numpy_from_nonfixed_2d_array(aa, max_sentence_len=50, max_num_utterance=10, padding_value=0):
@@ -600,13 +596,25 @@ cc_test_data = [
 #get_numpy_from_nonfixed_2d_array(cc_test_data, max_sentence_len=5, max_num_utterance=4)
 
 
-# In[54]:
+# In[ ]:
 
 
+#try:
+#    __IPYTHON__
+#    from tqdm.notebook import tqdm
+#except NameError:
+#    from tqdm import tqdm
 try:
     __IPYTHON__
+    import sys
+    if 'ipykernel' in sys.modules:
+        pass
+    elif 'IPython' in sys.modules:
+        raise
+    else:
+        raise
     from tqdm.notebook import tqdm
-except NameError:
+except:
     from tqdm import tqdm
     
 def pad_process(data, max_sentence_len=50, max_num_utterance=10):
@@ -638,7 +646,7 @@ else:
 
 # **학습데이터셋 저장**
 
-# In[55]:
+# In[ ]:
 
 
 with open(f'data/train_{prefix}.pkl', 'wb') as f:
@@ -649,7 +657,7 @@ with open(f'data/test_{prefix}.pkl', 'wb') as f:
     pickle.dump(test_pad, f)
 
 
-# In[56]:
+# In[ ]:
 
 
 with open(f'data/positive_{prefix}.pkl', "wb") as f:
@@ -658,14 +666,20 @@ with open(f'data/positive_str_{prefix}.pkl', "wb") as f:
     pickle.dump(positive_str2, f)
 
 
-# In[57]:
+# In[ ]:
 
 
 with open(f'data/test_all_ids_{prefix}.pkl', "wb") as f:
     pickle.dump(test_all_ids, f)
 
 
-# In[58]:
+# In[ ]:
+
+
+get_ipython().system('rm -rf ~/.cache/huggingface/datasets/story_data')
+
+
+# In[ ]:
 
 
 for unit, unit_str in zip (positive_data, positive_str2):
@@ -678,7 +692,7 @@ for unit, unit_str in zip (positive_data, positive_str2):
     #break
 
 
-# In[59]:
+# In[ ]:
 
 
 def get_dat(index, data_pad, ids = None):
@@ -735,7 +749,7 @@ def browse_dat(index, data_pad):
 #browse_dat(0, train_pad)
 
 
-# In[61]:
+# In[ ]:
 
 
 if test_num > 0:
@@ -743,13 +757,13 @@ if test_num > 0:
         browse_dat(i, test_pad)
 
 
-# In[62]:
+# In[ ]:
 
 
 import pandas as pd
 
 
-# In[63]:
+# In[ ]:
 
 
 column_names = ['id', 'Narrative', 'Response', 'GT_Response', 'y_true', 'score', 'R2@1', 'R10@1', 'R10@2', 'R10@5', 'MRR', 'AVG']
@@ -759,7 +773,7 @@ print(column_names)
 df = pd.DataFrame(columns=column_names)
 
 
-# In[64]:
+# In[ ]:
 
 
 n = len(test_all_ids)
@@ -779,19 +793,19 @@ for i in tqdm(range(n)):
     data_dict_all.append(data_dict)
 
 
-# In[65]:
+# In[ ]:
 
 
 df = pd.DataFrame.from_dict(data_dict_all)
 
 
-# In[66]:
+# In[ ]:
 
 
 df
 
 
-# In[67]:
+# In[ ]:
 
 
 # output rows are too large for excel
@@ -799,7 +813,7 @@ df
 df.to_csv(f'test_output_{prefix}.csv', index=False)
 
 
-# In[68]:
+# In[ ]:
 
 
 column_names = ['id', 'Narrative', 'Response', 'GT_Response', 'y_true', 'score', 'R2@1', 'R10@1', 'R10@2', 'R10@5', 'MRR', 'AVG']
@@ -809,7 +823,7 @@ print(column_names)
 df = pd.DataFrame(columns=column_names)
 
 
-# In[69]:
+# In[ ]:
 
 
 n = len(dev_all_ids)
@@ -829,7 +843,7 @@ for i in tqdm(range(n)):
     data_dict_all.append(data_dict)
 
 
-# In[70]:
+# In[ ]:
 
 
 df = pd.DataFrame.from_dict(data_dict_all)
