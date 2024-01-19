@@ -1,0 +1,28 @@
+# pip install -r requirements-torch-cu111.txt --extra-index-url https://download.pytorch.org/whl/lts/1.8/cu111
+# pip install -r requirements-torch-cu111.txt --extra-index-url https://download.pytorch.org/whl/cu111
+# pip install torch==1.10.1+cu111 torchvision==0.11.2+cu111 torchaudio==0.10.1 -f https://download.pytorch.org/whl/torch_stable.html
+#torch==1.10.1+cu111
+#torchvision==0.11.2+cu111
+#torchaudio==0.10.1
+
+# pip install torch==1.10.2+cu111 --extra-index-url https://download.pytorch.org/whl/cu111
+# pip install -r requirements-torch-cu116.txt --extra-index-url https://download.pytorch.org/whl/cu116
+# pip3 install torch torchvision torchaudio --extra-index-url https://download.pytorch.org/whl/cu116
+
+# pip install torch --pre --extra-index-url https://download.pytorch.org/whl/nightly/cu118
+# pip install -r requirements-torch-cu118.txt --extra-index-url https://download.pytorch.org/whl/nightly/cu118
+
+#torch==2.0.0.dev20221225+cu118
+torch==2.0.1+cu118
+torchaudio==2.0.2
+torchvision==0.15.2
+transformers[torch]
+gensim
+datasets
+tqdm
+gdown
+jupyter
+gpustat
+openpyxl
+nbconvert
+ZipUnicode
